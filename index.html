@@ -101,6 +101,10 @@ ol.first{margin:0;padding-left:20px} ol.first li{margin-bottom:4px}
 .map .item .why{font-size:14px;color:var(--muted);margin-top:4px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;background:var(--surface-2);border-radius:10px;padding:10px 12px;word-break:break-word;margin:8px 0 10px;user-select:all}
 .note{font-size:13px;color:var(--muted)}
+.deep{border:2px solid var(--accent);background:var(--accent-soft)}
+.deep .k{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.topics span{font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
 .hidden{display:none}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
@@ -111,7 +115,7 @@ ol.first{margin:0;padding-left:20px} ol.first li{margin-bottom:4px}
 <div class="wrap">
   <div class="brand"><span><b>CYBER OFFICE</b> · экспресс-аудит</span><span id="testLabel">тестовая версия</span></div>
   <main id="app" aria-live="polite"></main>
-  <p class="note" style="margin-top:28px">Это оценка по Вашим ответам, а не проверка телефона. Ответы хранятся только на этом устройстве и никуда не отправляются. <button class="btn link" id="wipe" type="button">Удалить мои ответы</button></p>
+  <p class="note" style="margin-top:28px">Это оценка по Вашим ответам, а не проверка телефона. Мы не собираем персональные данные: ответы хранятся только на этом устройстве и никуда не отправляются. Если Вы напишете нам за помощью, Ваши данные обрабатываются в соответствии с <a href="https://www.consultant.ru/document/cons_doc_LAW_61801/" target="_blank" rel="noopener" style="color:inherit">Федеральным законом № 152-ФЗ «О персональных данных»</a> и только для ответа на Ваш запрос. <button class="btn link" id="wipe" type="button">Удалить мои ответы</button></p>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -119,7 +123,8 @@ ol.first{margin:0;padding-left:20px} ol.first li{margin-bottom:4px}
 "use strict";
 
 /* ===== Настройки теста ===== */
-var HELP_TG = "";            // ссылка на аккаунт Cyber Office в Telegram, например https://t.me/...; пусто = канал ещё не подключён
+var HELP_URL = "";           // ссылка на канал помощи Cyber Office (мессенджер, почта mailto: или сайт); пусто = канал ещё не подключён
+var HELP_LABEL = "Написать нам";
 var HELP_EMAIL = "";         // запасной канал, например help@...
 var STORE = "co-express-v1";
 
@@ -131,26 +136,23 @@ var Q = [
  {id:"a1", code:"А1", th:"A", step:"find", text:"Телефон потерялся. Сможете ли Вы с чужого устройства найти и заблокировать его?",
   why:"Если телефон нельзя быстро заблокировать, в нём остаются открытыми почта, банк и коды из SMS.",
   opts:[{t:"Да, знаю как и помню пароль от аккаунта Apple или Google",s:"Z"},{t:"Поиск включён, но пароль от аккаунта не помню",s:3},{t:"Не знаю, включён ли поиск",s:"N"},{t:"Не задумывался",s:4}]},
- {id:"a2", code:"А2", th:"A", step:"sim", text:"Защищён ли Ваш номер от того, что мошенник перевыпустит SIM-карту?",
-  why:"Через номер телефона восстанавливаются почта, банк и Госуслуги.",
-  opts:[{t:"Стоит PIN на SIM и запрет перевыпуска у оператора",s:"Z"},{t:"Только PIN на SIM",s:3},{t:"Ничего не настраивал",s:4},{t:"Не знаю",s:"N"}]},
  {id:"a3", code:"А3", th:"A", step:"call", text:"Звонят «из банка» или «из полиции», знают Ваше имя и просят назвать код из SMS или перевести деньги на «безопасный счёт». Что сделаете?",
   why:"Мошенники знают имя и детали из утечек – это не доказательство, что звонит банк.",
   opts:[{t:"Положу трубку и сам перезвоню по номеру с карты или из приложения",s:"Z"},{t:"Уточню детали и, если звучит убедительно, продолжу разговор",s:5},{t:"Назову код, если убежусь, что это банк",s:5},{t:"Не знаю, как поступлю",s:4}]},
- {id:"b1", code:"Б1", th:"B", step:"pwd", text:"Как устроены Ваши пароли?",
+ {id:"b1", code:"Б1", th:"B", step:"pwd", multi:true, hint:"Можно выбрать несколько.", text:"Как устроены Ваши пароли?",
   why:"Один пароль на всё превращает утечку любого сайта во взлом почты.",
-  opts:[{t:"Один-два пароля с небольшими изменениями",s:5},{t:"Разные, храню в заметках или в файле",s:4},{t:"Разные, их сохраняет браузер или телефон",s:2},{t:"Разные, в менеджере паролей",s:"Z"},{t:"Не знаю",s:"N"}]},
+  opts:[{t:"Один-два пароля с небольшими изменениями",s:5},{t:"Разные, храню в заметках или в файле",s:4},{t:"Разные, их сохраняет браузер или телефон",s:2},{t:"Разные, в менеджере паролей",s:"Z"},{t:"Не знаю",s:"N",excl:true}]},
  {id:"b2", code:"Б2", th:"B", step:"mail2fa", text:"Как защищён вход в Вашу основную почту?",
   why:"Почта – ключ, через который восстанавливается почти всё остальное.",
   opts:[{t:"Пароль и код из приложения или подтверждение на телефоне",s:"Z"},{t:"Пароль и код по SMS",s:3},{t:"Только пароль",s:5},{t:"Не знаю",s:"N"}]},
  {id:"b3", code:"Б3", th:"B", step:"recovery", text:"Как Вы вернёте доступ к основной почте, если не сможете войти?",
   why:"Вернуть почту должны Вы – даже без этого телефона.",
   opts:[{t:"Есть несколько своих способов: вторая почта, резервные коды",s:"Z"},{t:"Только через мой номер телефона",s:4},{t:"Через номер или почту другого человека",s:4},{t:"Не знаю, что там указано",s:"N"}]},
- {id:"b4", code:"Б4", th:"B", step:"tg", text:"Включён ли в Telegram облачный пароль?",
-  why:"Без облачного пароля Telegram угоняют по одному коду из SMS.",
-  opts:[{t:"Да",s:"Z"},{t:"Нет",s:4},{t:"Не знаю",s:"N"},{t:"Не пользуюсь Telegram",s:"X"}]},
- {id:"c0", code:"В0", th:"C", scored:false, multi:true, text:"Кто в семье пользуется Вашими устройствами или может стать целью мошенников?", hint:"Можно выбрать несколько.",
-  opts:[{t:"Дети",v:"kids"},{t:"Пожилые родители",v:"parents"},{t:"Никто",v:"none",excl:true}]},
+ {id:"b4", code:"Б4", th:"B", step:"tg", text:"Защищён ли вход в Ваш основной мессенджер дополнительным паролем?", hint:"В разных мессенджерах он называется по-разному: облачный пароль, двухшаговая проверка, PIN-код.",
+  why:"Без дополнительного пароля мессенджер угоняют по одному коду из SMS и пишут Вашим близким от Вашего имени.",
+  opts:[{t:"Да",s:"Z"},{t:"Нет",s:4},{t:"Не знаю",s:"N"},{t:"Не пользуюсь мессенджерами",s:"X"}]},
+ {id:"c0", code:"В0", th:"C", scored:false, multi:true, text:"Кто, кроме Вас, пользуется Вашими устройствами или может стать целью мошенников?", hint:"Можно выбрать несколько.",
+  opts:[{t:"Дети",v:"kids"},{t:"Родители",v:"parents"},{t:"Другие родные и близкие",v:"relatives"},{t:"Друзья и коллеги",v:"friends"},{t:"Помощники по дому или работе",v:"helpers"},{t:"Только я",v:"me",excl:true},{t:"Не знаю",v:"unknown",excl:true}]},
  {id:"c1", code:"В1", th:"C", step:"child", only:"kids", text:"Как устроено устройство ребёнка?",
   why:"Игра или мод с вирусом не должны получить доступ к Вашей почте и паролям.",
   opts:[{t:"Отдельный профиль или детский аккаунт, установка с моего разрешения",s:"Z"},{t:"Ставит что хочет, но моих аккаунтов там нет",s:3},{t:"Ставит что хочет, и там открыты мои почта или браузер с паролями",s:5},{t:"Не знаю",s:"N"}]},
@@ -165,7 +167,7 @@ var STEPS = {
  call:{q:"a3",title:"Правило «положи трубку и перезвони сам»",why:"Мошенник не сможет довести разговор до кода или перевода.",time:"5 минут разговора с семьёй",
   check:"Каждый в семье может назвать правило своими словами.",
   all:["Если в неожиданном звонке просят код из SMS, перевод или установку приложения – кладите трубку.","Перезвоните сами: номер на обороте карты или в официальном приложении банка.","Код из SMS никому не называйте и не вводите по подсказке – ни «банку», ни «полиции», ни «оператору».","Расскажите правило близким, особенно пожилым родителям."]},
- sim:{q:"a2",title:"Защитить номер телефона",why:"Через номер восстанавливаются почта, банк и Госуслуги.",time:"15 минут и звонок оператору",
+ sim:{q:"b3",title:"Защитить номер телефона",why:"Через номер восстанавливаются почта, банк и Госуслуги.",time:"15 минут и звонок оператору",
   check:"При включении телефон просит PIN SIM-карты; на Госуслугах установлен запрет на оформление сим-карт.",
   ios:["Настройки → Сотовая связь → [номер] → SIM-PIN → включить, затем «Изменить PIN»."],
   samsung:["Настройки → Безопасность и конфиденциальность → Другие параметры безопасности → Настройка блокировки SIM-карты → включить, затем «Сменить PIN-код SIM-карты»."],
@@ -189,9 +191,9 @@ var STEPS = {
  recovery:{q:"b3",title:"Свои способы восстановления почты",why:"Вернуть почту сможете Вы и только Вы – даже без этого телефона.",time:"10 минут",
   check:"Каждый номер и адрес для восстановления – Ваш и доступен Вам сегодня.",
   all:["Откройте раздел безопасности почты: номера телефонов и резервные адреса.","Удалите старые номера и адреса, а также контакты других людей.","Добавьте вторую свою почту у другого провайдера и защитите её вторым шагом входа.","Сохраните резервные коды не на этом телефоне."]},
- tg:{q:"b4",title:"Облачный пароль в Telegram",why:"Telegram не угонят по одному коду из SMS.",time:"5 минут",
-  check:"В «Устройствах» только Ваши устройства, облачный пароль включён.",
-  all:["Telegram → Настройки → Конфиденциальность → Облачный пароль (может называться «Двухэтапная аутентификация») → задать пароль и почту для восстановления.","Настройки → Устройства → завершить незнакомые сеансы.","Если Telegram на этом устройстве установлен меньше суток назад, завершить другие сеансы не получится – делайте со старого устройства."]},
+ tg:{q:"b4",title:"Дополнительный пароль в мессенджере",why:"Мессенджер не угонят по одному коду из SMS.",time:"5 минут",
+  check:"Вход на новом устройстве требует дополнительный пароль, а в списке устройств только Ваши.",
+  all:["Откройте настройки мессенджера → раздел о конфиденциальности или безопасности → включите дополнительный пароль: облачный пароль, двухшаговую проверку или PIN-код.","Укажите почту для восстановления этого пароля и сохраните пароль в менеджере паролей.","Там же откройте список устройств и завершите незнакомые сеансы.","Код из SMS никому не называйте: с ним чужой человек войдёт в аккаунт, если дополнительного пароля нет."]},
  child:{q:"c1",title:"Отделить устройство ребёнка",why:"Вирус из игры не получит Вашу почту и пароли.",time:"20 минут",
   check:"В браузере ребёнка нет Ваших паролей, а установка новых приложений требует Вашего разрешения.",
   all:["Выйдите из своей почты, банка и мессенджеров на устройстве ребёнка и удалите свои сохранённые пароли в браузере.","Компьютер: отдельная учётная запись ребёнка с типом «Стандартный», не администратор.","iPhone и iPad: Настройки → [Ваше имя] → Семья → детская учётная запись и «Попросить купить».","Android: Настройки → Цифровое благополучие и родительский контроль или приложение Family Link."]},
@@ -202,21 +204,21 @@ var STEPS = {
 
 /* ===== Правила главного риска (порядок = приоритет) ===== */
 function A(id){ var a=state.ans[id]; return (a===undefined||a===null)?null:a; }
-function inn(id,arr){ var a=A(id); return a!==null && arr.indexOf(a)>=0; }
+function inn(id,arr){ var a=A(id); if(a===null) return false; if(Array.isArray(a)) return a.some(function(x){return arr.indexOf(x)>=0;}); return arr.indexOf(a)>=0; }
 var RULES = [
  {n:1,lvl:5,step:"call",when:function(){return inn("a3",[1,2,3]);},
   title:"Убедительный звонок может закончиться переводом денег или потерей аккаунта",
   chain:["Звонок «из банка», знают Ваше имя","Просят код из SMS или перевод","Код подтверждает чужой вход или платёж","Деньги или аккаунт уходят мошеннику"],
   first:["Кладите трубку, как только речь заходит о коде или переводе","Перезванивайте сами по номеру с карты или из приложения","Договоритесь в семье: коды не называем никому"]},
- {n:2,lvl:5,step:"sim",when:function(){return A("b3")===1 && A("a2")!==null && A("a2")!==0;},
+ {n:2,lvl:5,step:"sim",when:function(){return A("b3")===1;},
   title:"Через Ваш номер телефона можно забрать почту, а через неё – всё остальное",
   chain:["Мошенник перевыпускает Вашу SIM","Получает SMS-код от почты","Сбрасывает пароли через почту","Банк, Госуслуги, мессенджеры"],
   first:["Запретите у оператора перевыпуск SIM без личного визита","Поставьте PIN-код на SIM-карту","Добавьте в почту свои резервные способы восстановления"]},
- {n:3,lvl:4,step:"sim",when:function(){return A("b2")===1 && A("a2")!==null && A("a2")!==0;},
+ {n:3,lvl:4,step:"sim",when:function(){return A("b2")===1;},
   title:"Код входа в Вашу почту может прийти мошеннику",
   chain:["Мошенник перевыпускает Вашу SIM","SMS с кодом приходит ему","Вход в Вашу почту","Сброс паролей остальных сервисов"],
   first:["Запретите у оператора перевыпуск SIM без личного визита","Переведите второй шаг входа в почту на приложение, если сервис позволяет","Поставьте PIN-код на SIM-карту"]},
- {n:4,lvl:5,step:"pwd",when:function(){return A("b1")===0 && inn("b2",[2,3]);},
+ {n:4,lvl:5,step:"pwd",when:function(){return inn("b1",[0]) && inn("b2",[2,3]);},
   title:"Утечка любого сайта может открыть Вашу почту, а через неё – всё остальное",
   chain:["Утечка магазина или сервиса","Тот же пароль пробуют на почте","Вход в Вашу почту","Сброс паролей банка и Госуслуг"],
   first:["Сегодня смените пароль основной почты на уникальный","Включите второй шаг входа в почту","Перейдите на менеджер паролей"]},
@@ -225,14 +227,14 @@ var RULES = [
   chain:["Мод, чит или «бесплатная» игра","Программа-шпион","Сохранённые пароли и сеансы","Ваша почта и банк"],
   first:["Выйдите из своих аккаунтов на устройстве ребёнка","Удалите свои пароли из его браузера","Правило: незнакомое – сначала показать взрослому"]},
  {n:6,lvl:4,step:"tg",when:function(){return A("b4")===1;},
-  title:"Ваш Telegram могут угнать по одному коду из SMS",
-  chain:["Код из SMS попадает к мошеннику","Вход в Ваш Telegram","Просьбы о деньгах Вашим близким","Деньги и доверие близких"],
-  first:["Включите облачный пароль","Проверьте список устройств","Предупредите близких: о деньгах – только звонком"]},
+  title:"Ваш мессенджер могут угнать по одному коду из SMS",
+  chain:["Код из SMS попадает к мошеннику","Вход в Ваш мессенджер","Просьбы о деньгах Вашим близким","Деньги и доверие близких"],
+  first:["Включите дополнительный пароль","Проверьте список устройств","Предупредите близких: о деньгах – только звонком"]},
  {n:7,lvl:4,step:"codeword",when:function(){return inn("c2",[1,2]);},
   title:"Звонок с поддельным голосом близкого может закончиться переводом денег",
   chain:["Голос из соцсетей или голосовых","Звонок «я в беде»","Срочная просьба перевести","Деньги уходят мошеннику"],
   first:["Придумайте семейное кодовое слово","Договоритесь перезванивать по своему номеру","Предупредите пожилых родственников"]},
- {n:8,lvl:4,step:"pwd",when:function(){return A("b1")===1;},
+ {n:8,lvl:4,step:"pwd",when:function(){return inn("b1",[1]);},
   title:"Доступ к телефону или облаку откроет все пароли сразу",
   chain:["Доступ к телефону или облаку","Заметка или файл с паролями","Почта, банк, мессенджеры"],
   first:["Перенесите пароли в менеджер паролей","Удалите заметки и файлы с паролями","Смените пароль основной почты"]},
@@ -252,18 +254,22 @@ function load(){ try{ var s=localStorage.getItem(STORE); if(s){ var o=JSON.parse
 function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
 function wipe(){ try{ localStorage.removeItem(STORE); }catch(e){} state={ans:{},idx:0,screen:"intro",self:{},help:{},open:{}}; render(); toast("Ответы удалены с этого устройства"); }
 
-function family(){ var a=A("c0")||[]; return {kids:a.indexOf(0)>=0, parents:a.indexOf(1)>=0, none:a.indexOf(2)>=0}; }
+function family(){ var a=A("c0")||[]; var has=function(i){return a.indexOf(i)>=0;}; return {kids:has(0), others:has(1)||has(2)||has(3)||has(4), unknown:has(6), me:has(5), list:a.map(function(i){return QI.c0.opts[i].t.toLowerCase();})}; }
 function seq(){
   var f=family();
   return Q.filter(function(q){
     if(q.only==="kids") return f.kids;
-    if(q.only==="any") return f.kids||f.parents;
+    if(q.only==="any") return f.kids||f.others||f.unknown;
     return true;
   });
 }
 function stateOf(q){
   var a=A(q.id); if(a===null) return null;
-  return q.opts[a].s;
+  if(!Array.isArray(a)) return q.opts[a].s;
+  if(!a.length) return null;
+  var best=null, bl=-1;
+  a.forEach(function(i){ var st=q.opts[i].s, l=lvlOf(st); if(l>bl){ bl=l; best=st; } });
+  return best;
 }
 function lvlOf(s){ if(s===null||s===undefined) return 0; if(s==="N") return 4; if(s==="Z"||s==="X") return 0; return s; }
 function platform(){ var a=A("a0"); return a===null?"unknown":Q[0].opts[a].v; }
@@ -285,10 +291,10 @@ function render(){
 function renderIntro(){
   var has=Object.keys(state.ans).length>0;
   var c=el("div");
-  c.appendChild(el("h1",null,"Как Вас могут ограбить через телефон, почту и мессенджеры?"));
-  c.appendChild(el("p",{class:"muted"},"9–11 вопросов, 5–7 минут. В конце – главный риск, понятная цепочка последствий и 3–5 шагов, чтобы его закрыть: самостоятельно по инструкции или с нашей помощью."));
+  c.appendChild(el("h1",null,"Насколько защищены Ваш телефон, почта и близкие?"));
+  c.appendChild(el("p",{class:"muted"},"8–10 вопросов, около 5 минут. В конце – что у Вас уже защищено, главный риск и 3–5 шагов, чтобы его закрыть: самостоятельно по инструкции или с нашей помощью."));
   var card=el("div",{class:"card small"});
-  card.innerHTML="<p><b>Как отвечать.</b> Выбирайте то, что есть у Вас сейчас, а не как правильно. «Не знаю» – нормальный ответ: мы покажем, где проверить.</p><p style='margin:0'><b>Что мы не спрашиваем:</b> пароли, коды, номера карт и документов, суммы. Ответы остаются на этом устройстве.</p>";
+  card.innerHTML="<p><b>Зачем это.</b> Мы создаём Cyber Office, чтобы люди чувствовали себя в цифровом мире спокойно и уверенно и сами управляли своей безопасностью. Этот аудит бесплатный и без регистрации: он покажет, что у Вас уже защищено, а что стоит укрепить.</p><p><b>О чём просим.</b> Отвечайте честно – как есть сейчас, а не как правильно. Тогда рекомендации будут точными именно для Вас. «Не знаю» – тоже честный ответ: мы подскажем, где проверить.</p><p style='margin:0'><b>Что мы не спрашиваем:</b> пароли, коды, номера карт и документов, суммы. Ответы остаются на этом устройстве.</p>";
   c.appendChild(card);
   var r=el("div",{class:"row"});
   if(has){
@@ -380,10 +386,11 @@ function resultCode(R){
   var plat={ios:"iPhone",samsung:"Samsung",android:"Android",unknown:"не указан"}[platform()];
   var parts=[];
   seq().forEach(function(q){ if(q.scored===false) return; var st=R.states[q.id]; var t = st==="Z"?"З":st==="X"?"–":st==="N"?"Н":"О"+st; parts.push(q.code+"-"+t); });
-  var fam=family(); var famTxt=[fam.kids?"дети":"",fam.parents?"родители":""].filter(Boolean).join("+")||"нет";
-  var self=R.plan.filter(function(k){return state.self[k];}).map(function(k){return QI[STEPS[k].q].code;});
-  var help=R.plan.filter(function(k){return state.help[k];}).map(function(k){return QI[STEPS[k].q].code;});
-  return "Телефон: "+plat+" · Семья: "+famTxt+" · "+parts.join(" ")+" · Главный: "+(R.fired[0]?R.fired[0].n:"нет")+" · Сам: "+(self.join(",")||"–")+" · Помощь: "+(help.join(",")||"–");
+  var fam=family(); var famTxt=fam.list.join(", ")||"не указано";
+  var TAG={find:"поиск",sim:"SIM",call:"звонки",pwd:"пароли",mail2fa:"вход в почту",recovery:"восстановление",tg:"мессенджер",child:"ребёнок",codeword:"кодовое слово"};
+  var self=R.plan.filter(function(k){return state.self[k];}).map(function(k){return TAG[k];});
+  var help=R.plan.filter(function(k){return state.help[k];}).map(function(k){return TAG[k];});
+  return "Телефон: "+plat+" · Семья: "+famTxt+" · "+parts.join(" ")+" · Главный: "+(R.fired[0]?R.fired[0].n:"нет")+" · Сам: "+(self.join(",")||"–")+" · Помощь: "+(help.join(",")||"–")+" · Диагностика: "+(state.deep?"да":"нет");
 }
 function instrList(k){
   var st=STEPS[k], p=platform(), items=[];
@@ -448,10 +455,20 @@ function renderResult(){
     });
   }
 
+  // следующий уровень: персональная диагностика
+  var deep=el("section",{class:"card deep"});
+  var topics=["Домашний Wi-Fi и умный дом","Компьютеры и ноутбуки","Банки, карты и платежи","Криптовалюта","Поездки","Помощники и персонал","Публичность и соцсети","Бизнес и рабочие аккаунты","Документы и резервные копии"];
+  deep.innerHTML="<div class='k'>Следующий уровень</div><h2>Персональная диагностика</h2><p class='small'>Экспресс-аудит проверил три темы: телефон, пароли и почту, семью. Персональная диагностика разбирает всю Вашу цифровую жизнь – и связи между аккаунтами, устройствами и людьми, которые не видны по отдельности. Итог – цифровой паспорт безопасности и план защиты для Вас и Вашей семьи.</p><div class='topics'>"+topics.map(function(t){return "<span>"+esc(t)+"</span>";}).join("")+"</div>";
+  var bD=el("button",{class:"btn",type:"button",style:"width:100%;margin-top:14px","aria-pressed":state.deep?"true":"false"},state.deep?"✓ Хочу персональную диагностику":"Хочу персональную диагностику");
+  bD.addEventListener("click",function(){ state.deep=!state.deep; save(); render(); if(state.deep){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
+  deep.appendChild(bD);
+  deep.appendChild(el("p",{class:"note",style:"margin:10px 0 0"},"Стоимость и формат обсудим при первом контакте. Отметка попадёт в код результата."));
+  c.appendChild(deep);
+
   // помощь
   var help=el("section",{class:"card",id:"help"});
   var code=resultCode(R);
-  var ch = HELP_TG ? "<a class='btn' style='display:block;text-align:center;text-decoration:none' href='"+esc(HELP_TG)+"' target='_blank' rel='noopener'>Написать в Telegram</a>" :
+  var ch = HELP_URL ? "<a class='btn' style='display:block;text-align:center;text-decoration:none' href='"+esc(HELP_URL)+"' target='_blank' rel='noopener'>"+esc(HELP_LABEL)+"</a>" :
     "<p class='note'>Канал помощи подключается к началу теста. Пока отправьте этот код тому, кто прислал Вам ссылку.</p>";
   help.innerHTML="<h2>Хотите, чтобы специалист прошёл это вместе с Вами?</h2><p class='small'>Скопируйте код результата и отправьте его нам – по нему видно, что настроить, без Ваших имени и телефона. Пароли и коды мы никогда не просим, а программы для управления Вашим телефоном не устанавливаем.</p><div class='code' id='code'>"+esc(code)+"</div>";
   var copy=el("button",{class:"btn secondary",type:"button",style:"width:100%;margin-bottom:10px"},"Скопировать код результата");
@@ -460,8 +477,6 @@ function renderResult(){
   help.appendChild(el("div",null,ch+(HELP_EMAIL?"<p class='note' style='margin-top:8px'>Запасной канал: "+esc(HELP_EMAIL)+"</p>":"")));
   c.appendChild(help);
 
-  // следующий уровень
-  c.appendChild(el("section",{class:"card"},"<h3>Если Вам есть что терять</h3><p class='small' style='margin:0'>Бизнес, публичность, семья с детьми и пожилыми родителями – для такой цифровой жизни экспресс-аудита мало. Глубокая диагностика находит индивидуальные риски и связи между аккаунтами, устройствами и людьми, а результат собирается в цифровой паспорт безопасности. Напишите нам с пометкой «диагностика».</p>"));
 
   // карта
   var map=el("section",{class:"card map"});
@@ -472,7 +487,7 @@ function renderResult(){
     if(!qs.length){ map.appendChild(el("div",{class:"item"},"<div class='top'><span>Защищать некого</span><span class='chip cX'>Не относится</span></div>")); return; }
     qs.forEach(function(q){
       var st=R.states[q.id];
-      map.appendChild(el("div",{class:"item"},"<div class='top'><span>"+esc(q.opts[A(q.id)].t)+"</span>"+chip(st)+"</div><div class='why'>"+esc(q.why)+"</div>"));
+      map.appendChild(el("div",{class:"item"},"<div class='top'><span>"+esc(Array.isArray(A(q.id))?A(q.id).map(function(i){return q.opts[i].t;}).join("; "):q.opts[A(q.id)].t)+"</span>"+chip(st)+"</div><div class='why'>"+esc(q.why)+"</div>"));
     });
   });
   c.appendChild(map);
