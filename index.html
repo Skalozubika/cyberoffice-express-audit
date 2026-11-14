@@ -123,8 +123,8 @@ ol.first{margin:0;padding-left:20px} ol.first li{margin-bottom:4px}
 "use strict";
 
 /* ===== Настройки теста ===== */
-var HELP_URL = "";           // ссылка на канал помощи Cyber Office (мессенджер, почта mailto: или сайт); пусто = канал ещё не подключён
-var HELP_LABEL = "Написать нам";
+var HELP_URL = "https://t.me/Cyberoffice_help";           // ссылка на канал помощи Cyber Office (мессенджер, почта mailto: или сайт); пусто = канал ещё не подключён
+var HELP_LABEL = "Написать в Telegram";
 var HELP_EMAIL = "";         // запасной канал, например help@...
 var STORE = "co-express-v1";
 
@@ -460,9 +460,9 @@ function renderResult(){
   var topics=["Домашний Wi-Fi и умный дом","Компьютеры и ноутбуки","Банки, карты и платежи","Криптовалюта","Поездки","Помощники и персонал","Публичность и соцсети","Бизнес и рабочие аккаунты","Документы и резервные копии"];
   deep.innerHTML="<div class='k'>Следующий уровень</div><h2>Персональная диагностика</h2><p class='small'>Экспресс-аудит проверил три темы: телефон, пароли и почту, семью. Персональная диагностика разбирает всю Вашу цифровую жизнь – и связи между аккаунтами, устройствами и людьми, которые не видны по отдельности. Итог – цифровой паспорт безопасности и план защиты для Вас и Вашей семьи.</p><div class='topics'>"+topics.map(function(t){return "<span>"+esc(t)+"</span>";}).join("")+"</div>";
   var bD=el("button",{class:"btn",type:"button",style:"width:100%;margin-top:14px","aria-pressed":state.deep?"true":"false"},state.deep?"✓ Хочу персональную диагностику":"Хочу персональную диагностику");
-  bD.addEventListener("click",function(){ state.deep=!state.deep; save(); render(); if(state.deep){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
+  bD.addEventListener("click",function(){ state.deep=true; save(); copyText("Хочу персональную диагностику. Код результата: "+resultCode(compute())); if(HELP_URL){ window.open(HELP_URL,"_blank","noopener"); } render(); if(!HELP_URL){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
   deep.appendChild(bD);
-  deep.appendChild(el("p",{class:"note",style:"margin:10px 0 0"},"Стоимость и формат обсудим при первом контакте. Отметка попадёт в код результата."));
+  deep.appendChild(el("p",{class:"note",style:"margin:10px 0 0"},"Мы скопируем код результата и откроем чат Cyber Office. Вставьте код в сообщение и отправьте – стоимость и формат обсудим в переписке."));
   c.appendChild(deep);
 
   // помощь
