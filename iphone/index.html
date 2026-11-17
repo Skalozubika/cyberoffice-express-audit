@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iPhone под защитой</title>
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#efede7; --ink:#1d2329; --muted:#5d6670; --line:#dcd9d1;
+  --accent:#1f5f5b; --accent-ink:#ffffff; --accent-soft:#e2efed;
+  --crit:#a3312a; --crit-soft:#f8e6e3; --warn:#8a5a12; --warn-soft:#f6ecd9; --ok:#2f6b3a; --ok-soft:#e4f0e5;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181b; --surface:#1c2226; --surface-2:#242b30; --ink:#e8e6e1; --muted:#9aa4ad; --line:#323a40;
+    --accent:#5fb3ab; --accent-ink:#0f1a19; --accent-soft:#1f3433;
+    --crit:#f08a80; --crit-soft:#3a2321; --warn:#e2b36a; --warn-soft:#352b1b; --ok:#8cc796; --ok-soft:#1f3123;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181b; --surface:#1c2226; --surface-2:#242b30; --ink:#e8e6e1; --muted:#9aa4ad; --line:#323a40;
+  --accent:#5fb3ab; --accent-ink:#0f1a19; --accent-soft:#1f3433;
+  --crit:#f08a80; --crit-soft:#3a2321; --warn:#e2b36a; --warn-soft:#352b1b; --ok:#8cc796; --ok-soft:#1f3123;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+.brand{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);letter-spacing:.02em;margin-bottom:16px;gap:10px}
+.brand b{color:var(--accent);font-weight:700;letter-spacing:.04em}
+.brand button{background:none;border:1px solid var(--crit);color:var(--crit);border-radius:99px;padding:5px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+h1{font-size:27px;line-height:1.2;margin:0 0 12px;font-weight:750}
+h2{font-size:21px;line-height:1.3;margin:0 0 10px;font-weight:700}
+h3{font-size:15px;margin:0 0 6px;font-weight:700}
+p{margin:0 0 12px}
+.muted{color:var(--muted)} .small{font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.btn{appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:13px 18px;font:inherit;font-weight:600;cursor:pointer;min-height:48px;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.secondary{background:transparent;color:var(--accent)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.warn{background:transparent;border-color:var(--warn);color:var(--warn)}
+.btn.link{background:none;border:none;color:var(--muted);padding:8px 0;min-height:auto;font-weight:500;text-decoration:underline}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row .btn{flex:1 1 140px}
+.stack{display:grid;gap:10px}
+.progress{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin:6px 0 18px}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.dots{display:flex;gap:6px;margin:10px 0 4px}
+.dots span{flex:1;height:6px;border-radius:99px;background:var(--surface-2)}
+.dots span.done{background:var(--ok)} .dots span.fail{background:var(--warn)} .dots span.cur{background:var(--accent)}
+.lead{font-size:18px;line-height:1.45}
+.promise{display:grid;gap:8px;margin:14px 0 18px;padding:0;list-style:none}
+.promise li{display:flex;gap:10px;align-items:flex-start}
+.promise li::before{content:"";flex:0 0 8px;height:8px;border-radius:50%;background:var(--accent);margin-top:8px}
+.opt{appearance:none;text-align:left;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;font:inherit;color:var(--ink);cursor:pointer;min-height:52px}
+.opt b{display:block}
+.opt span{font-size:14px;color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.why{font-size:17px;line-height:1.45;margin-bottom:14px}
+.eye{background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:15px}
+.eye b{display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.search{display:block;width:100%;appearance:none;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--ink);border-radius:14px;padding:14px 16px;font:inherit;text-align:left;cursor:pointer;margin-bottom:10px}
+.search .k{font-size:13px;color:var(--muted);display:block}
+.search .q{font-size:22px;font-weight:700;display:block;margin:2px 0}
+.search .h{font-size:13px;color:var(--accent);font-weight:600}
+.search.copied .h{color:var(--ok)}
+ol.how{margin:0 0 6px;padding-left:22px}
+ol.how li{margin-bottom:6px}
+details{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+summary{cursor:pointer;color:var(--accent);font-weight:600;padding:4px 0}
+.path{font-size:15px;background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-top:8px}
+.check{border-left:4px solid var(--ok);background:var(--ok-soft);border-radius:0 12px 12px 0;padding:10px 14px;margin:14px 0}
+.check b{color:var(--ok)}
+.note{border-left:4px solid var(--warn);background:var(--warn-soft);border-radius:0 12px 12px 0;padding:10px 14px;margin:12px 0;font-size:15px}
+.big{font-size:44px;font-weight:800;line-height:1;margin:6px 0}
+.list{display:grid;gap:8px;margin:12px 0}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.item .s{font-size:13px;font-weight:700;white-space:nowrap}
+.s.done{color:var(--ok)} .s.fail{color:var(--warn)} .s.none{color:var(--muted)}
+.item button{background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:4px 0}
+.sos{border:2px solid var(--crit)}
+.sos h2{color:var(--crit)}
+.sos ol{padding-left:22px;margin:0 0 12px} .sos li{margin-bottom:8px}
+label.f{display:block;font-size:14px;color:var(--muted);margin:6px 0 4px}
+input[type=tel],input[type=text]{width:100%;font:inherit;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+footer{font-size:13px;color:var(--muted);margin-top:24px;text-align:center}
+#print{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  .wrap,.toast{display:none!important}
+  #print{display:block;font:12pt/1.4 Arial,sans-serif;color:#000;padding:0 8mm}
+  #print h1{font-size:18pt;margin:0 0 4mm}
+  #print table{width:100%;border-collapse:collapse;margin:4mm 0}
+  #print td,#print th{border:1px solid #888;padding:2.5mm;vertical-align:top;text-align:left}
+  #print .box{display:inline-block;width:5mm;height:5mm;border:1.5px solid #000}
+  #print .sosp{border:2px solid #000;padding:4mm;margin-top:6mm}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="print"></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ===== Шаблон: для другого устройства меняется только объект DEVICE ===== */
+var HELP_URL = "https://t.me/Cyberoffice_help";
+var STORE = "co-guide-iphone-v1";
+
+var DEVICE = {
+  name: "iPhone",
+  title: "iPhone под защитой",
+  lead: "6 настроек за 25 минут. Если телефон украдут или потеряют, вор не получит доступ к деньгам, почте и переписке, а Вы сможете найти телефон или стереть его удалённо.",
+  versionHow: "Настройки → Основные → Об этом устройстве → строка «Версия iOS»",
+  versions: [
+    {id:"26", label:"iOS 26 и новее", hint:"большинство iPhone, обновлённых в 2025–2026"},
+    {id:"18", label:"iOS 18", hint:""},
+    {id:"17", label:"iOS 17 и старше", hint:"часть шагов будет выглядеть иначе"}
+  ],
+  searchHow: "Откройте «Настройки», потяните экран вниз – сверху появится строка поиска. Вставьте слово и нажмите на найденный пункт.",
+  findSite: "icloud.com/find",
+  steps: [
+    {
+      id:"code", title:"Надёжный код-пароль", min:3,
+      why:"Код – главный замок. Без него вор за минуту зайдёт в банк, почту и переписку.",
+      eye:"Код из 4 цифр, дата рождения или 1111 подбираются быстро – особенно если вор видел, как Вы его вводите.",
+      search:"код-пароль",
+      how:["Откройте найденный пункт «Face ID и код-пароль» и введите текущий код.","Нажмите «Сменить код-пароль».","Если код из 4 цифр, нажмите «Параметры код-пароля» и выберите «6 цифр».","Придумайте код, который не связан с датами и номерами. Не вводите его при посторонних."],
+      path:"Настройки → Face ID и код-пароль → Сменить код-пароль",
+      ok:"Для разблокировки нужно 6 цифр или больше, и это не дата рождения."
+    },
+    {
+      id:"cc", title:"Пункт управления закрыт", min:3,
+      why:"Первое, что делает вор, – включает авиарежим с заблокированного экрана. Телефон пропадает с карты, и найти его уже нельзя.",
+      eye:"Заблокируйте экран и смахните вниз от правого верхнего угла. Если открылись кнопки – вор тоже их увидит.",
+      search:"код-пароль",
+      how:["Откройте «Face ID и код-пароль», введите код.","Прокрутите вниз до раздела «Доступ с блокировкой экрана».","Выключите «Пункт управления».","Там же выключите «Аксессуары USB», если такой переключатель есть."],
+      path:"Настройки → Face ID и код-пароль → Доступ с блокировкой экрана → Пункт управления: выкл",
+      ok:"На заблокированном экране смахивание от правого угла ничего не открывает."
+    },
+    {
+      id:"find", title:"«Найти iPhone»", min:7,
+      why:"Если телефон пропал, Вы увидите его на карте, заблокируете или сотрёте данные удалённо – с любого компьютера или чужого телефона.",
+      eye:"Без этой функции потерянный телефон – это просто потерянный телефон. С ней – шанс вернуть и гарантия, что данные не уйдут.",
+      search:"Найти iPhone",
+      how:["Откройте найденный пункт «Найти iPhone».","Включите «Найти iPhone».","Включите «Сеть Локатора» – телефон можно найти, даже если он выключен или без интернета.","Включите «Последняя геопозиция».","Проверьте, что помните пароль от Apple ID: он понадобится, чтобы найти телефон с чужого устройства."],
+      path:"Настройки → Ваше имя (вверху) → Локатор → Найти iPhone",
+      ok:"Все три переключателя зелёные. Проверка: откройте {SITE} на компьютере – Ваш iPhone виден на карте."
+    },
+    {
+      id:"sdp", title:"Защита украденного устройства", min:3,
+      why:"Даже если вор подсмотрел код, он не сможет сменить пароль Apple ID и отключить поиск: телефон попросит Ваше лицо и выдержит паузу в час.",
+      eye:"Это защита ровно от сценария «подсмотрели код в кафе, потом украли телефон».",
+      search:"украденного",
+      how:["Откройте «Защита украденного устройства».","Включите её.","В строке «Требовать задержку безопасности» выберите «Всегда»."],
+      path:"Настройки → Face ID и код-пароль → Защита украденного устройства",
+      ok:"Переключатель включён, задержка – «Всегда».",
+      note:{
+        "26":"В iOS 26.4 и новее защита включается сама. Ваша задача – убедиться, что она действительно включена.",
+        "18":"",
+        "17":"Функция есть начиная с iOS 17.3. Если пункта нет – сначала обновите iPhone: Настройки → Основные → Обновление ПО."
+      },
+      needs:"Работает только при включённом «Найти iPhone» – предыдущий шаг."
+    },
+    {
+      id:"notif", title:"Скрыть текст уведомлений", min:3,
+      why:"Коды из СМС и сообщения банка видны на заблокированном экране. Посторонний может прочитать код для входа в Ваш аккаунт, не разблокируя телефон.",
+      eye:"Попросите кого-нибудь прислать Вам СМС, пока экран заблокирован. Если текст виден – его видят все.",
+      search:"миниатюр",
+      how:["Откройте «Показ миниатюр».","Выберите «Без блокировки»."],
+      path:"Настройки → Уведомления → Показ миниатюр → Без блокировки",
+      ok:"На заблокированном экране видно «Уведомление», но не текст. После разблокировки лицом текст появляется."
+    },
+    {
+      id:"sim", title:"PIN-код на SIM-карте", min:5,
+      why:"Вор может вынуть SIM-карту, вставить в другой телефон и получать Ваши СМС-коды от банка и Госуслуг. PIN на SIM это блокирует.",
+      eye:"Делайте этот шаг последним и спокойно: ошибка в PIN три раза – и SIM-карта заблокируется до визита к оператору.",
+      search:"SIM-PIN",
+      how:["Найдите PIN-код от SIM-карты: он на пластиковой карточке, из которой выламывали SIM. Чаще всего это 0000 или 1234, но не пробуйте наугад.","Откройте «SIM-PIN» и включите его, введите текущий PIN.","Нажмите «Изменить PIN» и задайте свой – 4–8 цифр, не совпадающий с кодом телефона.","Запишите новый PIN туда, где хранятся важные пароли."],
+      path:"Настройки → Сотовая связь → (Ваш номер) → SIM-PIN",
+      ok:"После перезагрузки телефон просит PIN SIM-карты.",
+      warn:"Карточки нет или у Вас eSIM – не угадывайте. Узнайте PIN у оператора или нажмите «Застрял – помогите»."
+    }
+  ],
+  bonus:{
+    title:"Бонус: не утекли ли Ваши пароли",
+    why:"iPhone сам проверяет сохранённые пароли по базам утечек. Если пароль утёк – его надо сменить первым.",
+    search:{"26":"Пароли","18":"Пароли","17":"Пароли"},
+    how:{
+      "26":["На главном экране откройте приложение «Пароли» (найдите через поиск, если не видно).","Откройте раздел «Безопасность».","Смените пароли из списка, начиная с почты и банков."],
+      "18":["На главном экране откройте приложение «Пароли» (найдите через поиск, если не видно).","Откройте раздел «Безопасность».","Смените пароли из списка, начиная с почты и банков."],
+      "17":["Откройте Настройки → Пароли.","Нажмите «Рекомендации по безопасности».","Включите «Обнаруживать утечки паролей» и смените пароли из списка."]
+    }
+  },
+  sos:[
+    "С любого компьютера или чужого телефона откройте {SITE}, войдите со своим Apple ID и включите «Режим пропажи».",
+    "Позвоните оператору и заблокируйте SIM-карту: {HOT}.",
+    "Позвоните в банк по номеру с обратной стороны карты и заблокируйте карты.",
+    "С другого устройства смените пароль главной почты и проверьте Госуслуги.",
+    "Не стирайте телефон сразу: после стирания его нельзя найти на карте. Стирайте, только если надежды вернуть нет."
+  ]
+};
+
+/* ===== Состояние ===== */
+var state = load();
+function blank(){ return {screen:"intro", ver:null, idx:0, st:{}, hot:""}; }
+function load(){ try{ var s=JSON.parse(localStorage.getItem(STORE)); if(s&&s.st) return s; }catch(e){} return blank(); }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+function go(screen, extra){ state.screen=screen; if(extra) for(var k in extra) state[k]=extra[k]; save(); render(); window.scrollTo(0,0); }
+
+var app=document.getElementById("app");
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function fill(s){ return s.replace("{SITE}", DEVICE.findSite).replace("{HOT}", state.hot ? state.hot : "номер – на сайте оператора или в договоре"); }
+function verLabel(){ var v=DEVICE.versions.filter(function(x){return x.id===state.ver;})[0]; return v? v.label : "версия не указана"; }
+function doneCount(){ return DEVICE.steps.filter(function(s){return state.st[s.id]==="done";}).length; }
+function minutesLeft(){ return DEVICE.steps.reduce(function(a,s){ return a + (state.st[s.id]==="done"?0:s.min); },0); }
+
+function toast(t){ var el=document.getElementById("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){el.classList.remove("on");},2600); }
+function copyText(t, cb){
+  function fb(){ var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); cb&&cb(); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){cb&&cb();},fb); } else fb();
+}
+function askHelp(text){
+  copyText(text, function(){ toast("Текст скопирован – вставьте его в чат и отправьте"); });
+  if(HELP_URL) window.open(HELP_URL,"_blank","noopener");
+}
+function el(html){ var d=document.createElement("div"); d.innerHTML=html; return d; }
+function on(sel, fn){ var n=app.querySelectorAll(sel); for(var i=0;i<n.length;i++) n[i].addEventListener("click", fn); }
+
+function header(){
+  return '<div class="brand"><span><b>CYBER OFFICE</b> · '+esc(DEVICE.title)+'</span>'+
+    (state.screen!=="sos" ? '<button id="toSos">Телефон пропал?</button>' : '')+'</div>';
+}
+function footer(){
+  return '<footer>Мы никогда не просим пароли и коды. Все настройки Вы делаете сами, данные остаются только на Вашем телефоне.<br>'+
+    '<button class="btn link" id="reset">Начать заново</button></footer>';
+}
+
+/* ===== Экраны ===== */
+var screens = {
+  intro: function(){
+    var mins = DEVICE.steps.reduce(function(a,s){return a+s.min;},0);
+    var started = Object.keys(state.st).length>0;
+    return '<h1>'+esc(DEVICE.title)+'</h1>'+
+      '<p class="lead">'+esc(DEVICE.lead)+'</p>'+
+      '<ul class="promise">'+
+        '<li>Не нужно искать по меню: даём слово для поиска – скопировали, вставили, готово.</li>'+
+        '<li>После каждого шага – проверка «глазами постороннего».</li>'+
+        '<li>В конце – карточка на случай пропажи, которую можно сохранить картинкой или распечатать.</li>'+
+      '</ul>'+
+      '<div class="row">'+
+        '<button class="btn" id="start">'+(started?'Продолжить':'Начать – '+mins+' минут')+'</button>'+
+      '</div>'+
+      '<p class="small muted" style="margin-top:12px">Удобнее всего открыть эту страницу на компьютере или втором телефоне, а настройки делать на iPhone. Можно и на самом iPhone – переключайтесь между страницей и «Настройками».</p>';
+  },
+  ver: function(){
+    var h='<div class="meta"><span>Подготовка</span><span>1 минута</span></div><div class="progress"><i style="width:4%"></i></div>'+
+      '<h2>Какая версия iOS на Вашем iPhone?</h2>'+
+      '<p class="muted">От версии зависит, как называются пункты меню.</p>'+
+      '<div class="path" style="margin-bottom:16px">Где посмотреть: '+esc(DEVICE.versionHow)+'</div><div class="stack">';
+    DEVICE.versions.forEach(function(v){
+      h+='<button class="opt" data-v="'+v.id+'" aria-pressed="'+(state.ver===v.id)+'"><b>'+esc(v.label)+'</b>'+(v.hint?'<span>'+esc(v.hint)+'</span>':'')+'</button>';
+    });
+    h+='<button class="opt" data-v="26"><b>Не знаю</b><span>покажем вариант для свежей версии</span></button></div>'+
+      '<div class="card" style="margin-top:16px"><h3>Как пользоваться поиском в Настройках</h3><p class="small" style="margin:0">'+esc(DEVICE.searchHow)+'</p></div>';
+    return h;
+  },
+  step: function(){
+    var s=DEVICE.steps[state.idx], n=DEVICE.steps.length;
+    var dots='<div class="dots">'+DEVICE.steps.map(function(x,i){ var c=state.st[x.id]||""; if(i===state.idx) c="cur"; return '<span class="'+c+'"></span>'; }).join("")+'</div>';
+    var note = s.note && s.note[state.ver] ? '<div class="note">'+esc(s.note[state.ver])+'</div>' : '';
+    var needs = s.needs ? '<p class="small muted">'+esc(s.needs)+'</p>' : '';
+    var warn = s.warn ? '<div class="note">'+esc(s.warn)+'</div>' : '';
+    return '<div class="meta"><span>Шаг '+(state.idx+1)+' из '+n+'</span><span>≈ '+s.min+' мин · осталось ≈ '+minutesLeft()+' мин</span></div>'+dots+
+      '<div class="card" style="margin-top:12px">'+
+        '<h2>'+esc(s.title)+'</h2>'+
+        '<p class="why">'+esc(s.why)+'</p>'+
+        '<div class="eye"><b>Глазами постороннего</b>'+esc(s.eye)+'</div>'+
+        note+
+        '<button class="search" id="copySearch"><span class="k">Слово для поиска в Настройках</span><span class="q">'+esc(s.search)+'</span><span class="h">Нажмите, чтобы скопировать</span></button>'+
+        '<ol class="how">'+s.how.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ol>'+
+        warn+needs+
+        '<div class="check"><b>Получилось, если:</b> '+esc(fill(s.ok))+'</div>'+
+        '<details><summary>Поиск не нашёл? Путь по меню</summary><div class="path">'+esc(s.path)+'</div></details>'+
+      '</div>'+
+      '<div class="stack">'+
+        '<button class="btn" id="done">Готово ✓</button>'+
+        '<div class="row"><button class="btn ghost" id="fail">Не получилось – дальше</button><button class="btn warn" id="stuck">Застрял – помогите</button></div>'+
+        '<div class="row" style="justify-content:space-between"><button class="btn link" id="back">'+(state.idx>0?'← Назад':'← К началу')+'</button><button class="btn link" id="toSum">Сводка</button></div>'+
+      '</div>';
+  },
+  bonus: function(){
+    var b=DEVICE.bonus, v=state.ver||"26";
+    return '<div class="meta"><span>Бонус</span><span>≈ 5 мин</span></div><div class="progress"><i style="width:100%"></i></div>'+
+      '<div class="card"><h2>'+esc(b.title)+'</h2><p class="why">'+esc(b.why)+'</p>'+
+      '<button class="search" id="copySearch"><span class="k">Слово для поиска</span><span class="q">'+esc(b.search[v])+'</span><span class="h">Нажмите, чтобы скопировать</span></button>'+
+      '<ol class="how">'+b.how[v].map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ol>'+
+      '<div class="check"><b>Получилось, если:</b> в разделе нет предупреждений об утечках или Вы уже сменили эти пароли.</div></div>'+
+      '<div class="stack"><button class="btn" id="toSum">К итогам</button><button class="btn ghost" id="toSum2">Пропустить</button></div>';
+  },
+  sum: function(){
+    var d=doneCount(), n=DEVICE.steps.length, full=d===n;
+    var h='<div class="card" style="text-align:center"><div class="muted small">Защищено</div><div class="big">'+d+' из '+n+'</div>'+
+      '<p style="margin:8px 0 0">'+(full?'Отлично! Ваш iPhone защищён от самых частых сценариев кражи и потери.':(d>=3?'Хорошее начало. Оставшиеся шаги можно сделать сейчас или позже – прогресс сохранён.':'Начало положено. Оставшиеся шаги займут около '+minutesLeft()+' минут.'))+'</p></div>'+
+      '<div class="list">';
+    DEVICE.steps.forEach(function(s,i){
+      var st=state.st[s.id], lab= st==="done"?'<span class="s done">✓ Сделано</span>': st==="fail"?'<span class="s fail">Не получилось</span>':'<span class="s none">Не начато</span>';
+      h+='<div class="item"><div>'+esc(s.title)+'<br>'+lab+'</div>'+(st!=="done"?'<button data-go="'+i+'">Сделать</button>':'')+'</div>';
+    });
+    h+='</div>';
+    var failed=DEVICE.steps.filter(function(s){return state.st[s.id]==="fail";});
+    if(failed.length) h+='<button class="btn warn" style="width:100%;margin-bottom:14px" id="helpFailed">Помогите с оставшимися шагами</button>';
+    h+='<div class="card sos"><h2>Карточка «Если iPhone пропал»</h2><p>5 действий на случай кражи. Сохраните картинкой в «Фото» или распечатайте – в стрессе это сэкономит самые важные минуты.</p>'+
+      '<button class="btn" style="width:100%" id="toSos2">Открыть карточку</button></div>'+
+      '<div class="card"><h2>Что дальше</h2><p>Телефон – это дверь. Следующий шаг – защитить то, что за ней: главную почту и Госуслуги. Через почту восстанавливаются почти все остальные аккаунты.</p>'+
+      '<div class="stack"><button class="btn secondary" id="next">Хочу защитить почту и Госуслуги</button>'+
+      '<button class="btn ghost" id="share">Отправить проводник близкому</button></div></div>';
+    return h;
+  },
+  sos: function(){
+    return '<div class="card sos"><h2>Если iPhone пропал</h2>'+
+      '<label class="f" for="hot">Горячая линия Вашего оператора (впишите один раз)</label>'+
+      '<input type="tel" id="hot" placeholder="например, 8 800 …" value="'+esc(state.hot)+'">'+
+      '<ol style="margin-top:14px" id="sosList">'+DEVICE.sos.map(function(x){return '<li>'+esc(fill(x))+'</li>';}).join("")+'</ol>'+
+      '<p class="small muted">Пароль от Apple ID должен быть у Вас в голове или записан вне телефона – иначе шаг 1 не получится.</p>'+
+      '<div class="stack"><button class="btn" id="png">Сохранить картинкой</button><button class="btn secondary" id="print">Распечатать памятку</button>'+
+      '<button class="btn warn" id="sosHelp">Телефон уже пропал – нужна помощь</button></div></div>'+
+      '<button class="btn link" id="back">← Назад</button>';
+  }
+};
+
+function render(){
+  if(!screens[state.screen]) state.screen="intro";
+  app.innerHTML = header() + screens[state.screen]() + footer();
+  on("#toSos", function(){ state.prev=state.screen; go("sos"); });
+  on("#reset", function(){ if(window.confirm("Стереть прогресс и начать заново?")){ try{localStorage.removeItem(STORE);}catch(e){} state=blank(); render(); } });
+  ({
+    intro:function(){ on("#start", function(){ go(state.ver? (state.idx>=DEVICE.steps.length?"sum":"step") : "ver"); }); },
+    ver:function(){ on(".opt", function(){
+      var v=this.getAttribute("data-v"), t=state.target, idx=0; state.target=null;
+      if(t==="bonus"){ go("bonus",{ver:v}); return; }
+      DEVICE.steps.forEach(function(s,i){ if(s.id===t) idx=i; });
+      go("step",{ver:v, idx:idx});
+    }); },
+    step:function(){
+      var s=DEVICE.steps[state.idx];
+      on("#copySearch", function(){ var b=this; copyText(s.search, function(){ b.classList.add("copied"); b.querySelector(".h").textContent="Скопировано – вставьте в поиск Настроек"; }); });
+      function next(){ if(state.idx<DEVICE.steps.length-1) go("step",{idx:state.idx+1}); else go("bonus"); }
+      on("#done", function(){ state.st[s.id]="done"; next(); });
+      on("#fail", function(){ state.st[s.id]="fail"; next(); });
+      on("#stuck", function(){ askHelp("Застрял на шаге «"+s.title+"» ("+DEVICE.name+", "+verLabel()+"). Нужна помощь."); });
+      on("#back", function(){ if(state.idx>0) go("step",{idx:state.idx-1}); else go("ver"); });
+      on("#toSum", function(){ go("sum"); });
+    },
+    bonus:function(){
+      var v=state.ver||"26";
+      on("#copySearch", function(){ var b=this; copyText(DEVICE.bonus.search[v], function(){ b.classList.add("copied"); b.querySelector(".h").textContent="Скопировано"; }); });
+      on("#toSum", function(){ go("sum"); }); on("#toSum2", function(){ go("sum"); });
+    },
+    sum:function(){
+      on("[data-go]", function(){ go("step",{idx:+this.getAttribute("data-go")}); });
+      on("#helpFailed", function(){ var f=DEVICE.steps.filter(function(s){return state.st[s.id]==="fail";}).map(function(s){return s.title;}); askHelp("Нужна помощь с настройкой "+DEVICE.name+" ("+verLabel()+"). Не получилось: "+f.join(", ")+". Защищено "+doneCount()+" из "+DEVICE.steps.length+"."); });
+      on("#toSos2", function(){ state.prev="sum"; go("sos"); });
+      on("#next", function(){ askHelp("Настроил(а) "+DEVICE.name+" – защищено "+doneCount()+" из "+DEVICE.steps.length+". Хочу защитить почту и Госуслуги."); });
+      on("#share", function(){
+        var t="Проверь свой телефон за 25 минут – простая пошаговая инструкция: "+location.href.split("#")[0];
+        if(navigator.share){ navigator.share({title:DEVICE.title,text:t}).catch(function(){}); } else copyText(t, function(){ toast("Ссылка скопирована – отправьте её близкому"); });
+      });
+    },
+    sos:function(){
+      var inp=document.getElementById("hot");
+      inp.addEventListener("input", function(){ state.hot=inp.value.trim(); save(); document.getElementById("sosList").innerHTML=DEVICE.sos.map(function(x){return '<li>'+esc(fill(x))+'</li>';}).join(""); });
+      on("#png", savePng);
+      on("#print", printMemo);
+      on("#sosHelp", function(){ askHelp("Срочно: пропал "+DEVICE.name+" ("+verLabel()+"). Нужна помощь."); });
+      on("#back", function(){ go(state.prev && state.prev!=="sos" ? state.prev : "intro"); });
+    }
+  })[state.screen]();
+}
+
+/* ===== Карточка картинкой ===== */
+function wrapLines(ctx, text, maxW){
+  var words=text.split(" "), lines=[], line="";
+  words.forEach(function(w){ var t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; });
+  if(line) lines.push(line); return lines;
+}
+function savePng(){
+  var W=1080, P=72, c=document.createElement("canvas"), ctx=c.getContext("2d");
+  var font='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
+  function layout(draw){
+    var y=P+20;
+    if(draw){ ctx.fillStyle="#a3312a"; ctx.font="700 30px "+font; ctx.fillText("CYBER OFFICE", P, y); }
+    y+=90; ctx.font="800 68px "+font; if(draw){ ctx.fillStyle="#1d2329"; ctx.fillText("Если iPhone пропал", P, y); }
+    y+=40;
+    DEVICE.sos.forEach(function(s,i){
+      ctx.font="500 38px "+font;
+      var lines=wrapLines(ctx, fill(s), W-P*2-80);
+      y+=50;
+      if(draw){ ctx.fillStyle="#a3312a"; ctx.beginPath(); ctx.arc(P+26, y-12, 26, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.font="700 30px "+font; ctx.textAlign="center"; ctx.fillText(String(i+1), P+26, y-1); ctx.textAlign="left"; ctx.font="500 38px "+font; ctx.fillStyle="#1d2329"; }
+      lines.forEach(function(l,j){ if(draw) ctx.fillText(l, P+80, y+j*52); });
+      y+=lines.length*52;
+    });
+    y+=40; ctx.font="400 30px "+font;
+    var foot=wrapLines(ctx,"Помощь: t.me/Cyberoffice_help · Мы никогда не просим пароли и коды.", W-P*2);
+    foot.forEach(function(l,j){ if(draw){ ctx.fillStyle="#5d6670"; ctx.fillText(l,P,y+j*42);} });
+    return y+foot.length*42+P;
+  }
+  c.width=W; c.height=1600; var H=layout(false); c.height=Math.max(H,1200);
+  ctx.fillStyle="#f6f5f1"; ctx.fillRect(0,0,W,c.height);
+  ctx.strokeStyle="#a3312a"; ctx.lineWidth=10; ctx.strokeRect(24,24,W-48,c.height-48);
+  layout(true);
+  c.toBlob(function(blob){
+    if(window.claude && window.claude.use){
+      window.claude.use("downloads").then(function(dl){
+        if(dl){ dl.save({filename:"esli-telefon-propal.png", data:blob}).then(function(){ toast("Картинка сохранена"); }).catch(function(e){ if(e&&e.code!=="declined") toast("Не удалось сохранить картинку здесь"); }); }
+        else plainSave(blob);
+      });
+      return;
+    }
+    plainSave(blob);
+  },"image/png");
+}
+function plainSave(blob){
+  {
+    var file=new File([blob],"esli-telefon-propal.png",{type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file],title:"Если iPhone пропал"}).catch(function(){}); return; }
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="esli-telefon-propal.png"; document.body.appendChild(a); a.click(); a.remove();
+    toast("Картинка сохранена – поставьте её в «Избранное» в Фото");
+  }
+}
+
+/* ===== Памятка для печати ===== */
+function printMemo(){
+  var rows=DEVICE.steps.map(function(s,i){
+    var st=state.st[s.id]==="done";
+    return '<tr><td><span class="box">'+(st?'✓':'')+'</span></td><td><b>'+(i+1)+'. '+esc(s.title)+'</b><br>'+esc(s.why)+'</td><td>Поиск: <b>'+esc(s.search)+'</b><br><small>'+esc(s.path)+'</small></td><td>'+esc(fill(s.ok))+'</td></tr>';
+  }).join("");
+  document.getElementById("print").innerHTML=
+    '<h1>'+esc(DEVICE.title)+' – памятка</h1><p>'+esc(DEVICE.searchHow)+' Версия: '+esc(verLabel())+'.</p>'+
+    '<table><tr><th></th><th>Что</th><th>Где</th><th>Как проверить</th></tr>'+rows+'</table>'+
+    '<div class="sosp"><h1>Если iPhone пропал</h1><ol>'+DEVICE.sos.map(function(x){return '<li>'+esc(fill(x))+'</li>';}).join("")+'</ol>'+
+    '<p>Помощь: t.me/Cyberoffice_help · Cyber Office никогда не просит пароли и коды.</p></div>';
+  window.print();
+}
+
+/* ===== Переход из экспресс-аудита: index.html#find, #sim, #bonus ===== */
+(function(){
+  var h=(location.hash||"").replace("#","");
+  if(!h) return;
+  var idx=-1; DEVICE.steps.forEach(function(s,i){ if(s.id===h) idx=i; });
+  if(idx<0 && h!=="bonus") return;
+  state.target=h;
+  if(!state.ver){ state.screen="ver"; }
+  else if(h==="bonus"){ state.screen="bonus"; }
+  else { state.screen="step"; state.idx=idx; }
+  save();
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+})();
+render();
+</script>
+</body>
+</html>
