@@ -88,6 +88,8 @@ ol.first{margin:0;padding-left:20px} ol.first li{margin-bottom:4px}
 .step .acts .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .instr{margin-top:12px;padding:12px 14px;background:var(--surface-2);border-radius:10px;font-size:15px}
 .instr ol{margin:6px 0 8px;padding-left:20px} .instr li{margin-bottom:6px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.instr .btn.guide{display:flex;width:100%;margin:0 0 12px;text-decoration:none;justify-content:center;align-items:center}
 .instr .chk{font-size:14px;color:var(--muted);margin:0}
 .chip{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap}
 .chip.c5{background:var(--crit-soft);color:var(--crit)}
@@ -163,6 +165,12 @@ var Q = [
 var QI = {}; Q.forEach(function(q){QI[q.id]=q;});
 
 /* ===== Шаги плана ===== */
+/* Пошаговые проводники по моделям телефонов. Путь – относительно страницы аудита.
+   Samsung: когда страница Андрея будет готова, добавить samsung:{url:"samsung/", ...} */
+var GUIDES = {
+  ios:{url:"iphone/", label:"Открыть пошаговый проводник для iPhone", whole:"iPhone под защитой", steps:{find:"find", sim:"sim", pwd:"bonus"}}
+};
+function guideFor(k){ var g=GUIDES[platform()]; if(!g) return null; if(k===undefined) return g.url; return g.steps[k] ? g.url+"#"+g.steps[k] : null; }
 var STEPS = {
  call:{q:"a3",title:"Правило «положи трубку и перезвони сам»",why:"Мошенник не сможет довести разговор до кода или перевода.",time:"5 минут разговора с семьёй",
   check:"Каждый в семье может назвать правило своими словами.",
@@ -442,17 +450,26 @@ function renderResult(){
       var bS=el("button",{class:"btn secondary",type:"button","aria-pressed":state.self[k]?"true":"false"},state.self[k]?"✓ Сделаю сам":"Сделаю сам");
       var bH=el("button",{class:"btn secondary",type:"button","aria-pressed":state.help[k]?"true":"false"},state.help[k]?"✓ Нужна помощь":"Помогите с этим");
       bI.addEventListener("click",function(){ state.open[k]=!state.open[k]; save(); render(); });
-      bS.addEventListener("click",function(){ state.self[k]=!state.self[k]; if(state.self[k]){ state.help[k]=false; state.open[k]=true; } save(); render(); });
-      bH.addEventListener("click",function(){ state.help[k]=!state.help[k]; if(state.help[k]) state.self[k]=false; save(); render(); if(state.help[k]){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
+      bS.addEventListener("click",function(){ state.self[k]=!state.self[k]; if(state.self[k]){ state.help[k]=false; state.open[k]=true; var gu=guideFor(k); if(gu) window.open(gu,"_blank","noopener"); } save(); render(); });
+      bH.addEventListener("click",function(){ state.help[k]=true; state.self[k]=false; save(); copyText("Нужна помощь: "+st.title+". Код результата: "+resultCode(compute())); if(HELP_URL){ window.open(HELP_URL,"_blank","noopener"); } render(); if(!HELP_URL){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
       acts.appendChild(bI); acts.appendChild(bS); acts.appendChild(bH);
       box.appendChild(acts);
       if(state.open[k]){
         var ins=el("div",{class:"instr"});
-        ins.innerHTML="<b>Как сделать</b><ol>"+instrList(k).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ol><p class='chk'><b>Как проверить:</b> "+esc(st.check)+"</p>";
+        var gk=guideFor(k);
+        ins.innerHTML=(gk?"<a class='btn guide' href='"+gk+"' target='_blank' rel='noopener'>"+esc(GUIDES[platform()].label)+" →</a>":"")+"<b>Как сделать</b><ol>"+instrList(k).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ol><p class='chk'><b>Как проверить:</b> "+esc(st.check)+"</p>";
         box.appendChild(ins);
       }
       c.appendChild(box);
     });
+  }
+
+  // проводник по телефону целиком
+  var gAll=guideFor();
+  if(gAll){
+    var gc=el("section",{class:"card"});
+    gc.innerHTML="<h3>"+esc(GUIDES[platform()].whole)+": 6 настроек за 25 минут</h3><p class='small muted'>Пошагово, со словами для поиска в Настройках и карточкой «Если телефон пропал».</p><a class='btn' style='width:100%' href='"+gAll+"' target='_blank' rel='noopener'>Открыть проводник</a>";
+    c.appendChild(gc);
   }
 
   // следующий уровень: персональная диагностика
