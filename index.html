@@ -111,11 +111,12 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 @media (min-width:600px){ .wrap{padding-top:36px} h1{font-size:30px} }
+.brand{flex-wrap:wrap;gap:8px}.emergency-link{color:inherit;display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}.acts .btn{text-align:center;text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><span><b>CYBER OFFICE</b> · экспресс-аудит</span><span id="testLabel">тестовая версия</span></div>
+  <div class="brand"><span><b>CYBER OFFICE</b> · экспресс-аудит</span><a class="emergency-link" href="emergency.html">Телефон пропал?</a></div>
   <main id="app" aria-live="polite"><section class="card"><h1>Экспресс-аудит цифровой безопасности</h1><p>Опросник загружается…</p><p class="muted">Если вопросы не появились, откройте сайт по HTTPS в обычной вкладке браузера. Просмотрщик HTML-файлов может блокировать JavaScript.</p></section></main>
 
 </div>
@@ -165,14 +166,15 @@ var Q = [
 var QI = {}; Q.forEach(function(q){QI[q.id]=q;});
 
 /* ===== Шаги плана ===== */
-/* Пошаговые проводники по моделям телефонов. Путь – относительно страницы аудита.
-   Samsung: когда страница Андрея будет готова, добавить samsung:{url:"samsung/", ...} */
 var GUIDES = {
-  ios:{url:"iphone/", label:"Настроить защиту", whole:"iPhone под защитой", steps:{find:"find", sim:"sim", pwd:"bonus"}}
+  ios:{url:"iphone/index.html", name:"iPhone", count:6, steps:{find:"find", sim:"sim", pwd:"passwords"}},
+  samsung:{url:"samsung/index.html", name:"Samsung", count:5, steps:{find:"find", sim:"sim", pwd:"passwords", tg:"telegram"}}
 };
-function guideFor(k){ var g=GUIDES[platform()] || (platforms().indexOf("ios")!==-1 ? GUIDES.ios : null); if(!g) return null; if(k===undefined) return g.url; return g.steps[k] ? g.url+"#"+g.steps[k] : null; }
+function guidesFor(k){
+  return platforms().map(function(p){ return GUIDES[p]; }).filter(function(guide){ return guide && guide.steps[k]; });
+}
 var STEPS = {
- call:{q:"a3",title:"Правило «положи трубку и перезвони сам»",why:"Мошенник не сможет довести разговор до кода или перевода.",time:"5 минут разговора с семьёй",
+ call:{q:"a3",title:"Правило «положи трубку и перезвони сам»",why:"Самостоятельный звонок по официальному номеру снижает риск передачи кода или перевода злоумышленнику.",time:"5 минут разговора с семьёй",
   check:"Каждый в семье может назвать правило своими словами.",
   all:["Если в неожиданном звонке просят код из SMS, перевод или установку приложения – кладите трубку.","Перезвоните сами: номер на обороте карты или в официальном приложении банка.","Код из SMS никому не называйте и не вводите по подсказке – ни «банку», ни «полиции», ни «оператору».","Расскажите правило близким, особенно пожилым родителям."]},
  sim:{q:"b3",title:"Защитить номер телефона",why:"Через номер восстанавливаются почта, банк и Госуслуги.",time:"15 минут и звонок оператору",
@@ -187,7 +189,7 @@ var STEPS = {
   samsung:["Настройки → Безопасность и конфиденциальность → Защита от потери устройства → Поиск смартфона → «Разрешить поиск этого смартфона».","Там же → Защита от кражи → включить «Проверка личности», «Обнаружение кражи» и «Удалённая блокировка».","Проверка: google.com/android/find с другого устройства."],
   android:["Настройки → Google → Все сервисы → Find Hub (Найти устройство) → включить.","Проверка: google.com/android/find с другого устройства."],
   all:["Запишите пароль от аккаунта Apple или Google так, чтобы он был доступен без телефона."]},
- pwd:{q:"b1",title:"Перейти на менеджер паролей",why:"Утечка одного сайта перестанет открывать почту и банк.",time:"15 минут на старт, замена паролей – постепенно",
+ pwd:{q:"b1",title:"Перейти на менеджер паролей",why:"Уникальные пароли снижают риск доступа к почте и банку после утечки на другом сайте.",time:"15 минут на старт, замена паролей – постепенно",
   check:"Проверка паролей не показывает повторов на почте, Госуслугах и в банках.",
   ios:["Приложение «Пароли» уже есть в iPhone. Откройте его → раздел безопасности: там утёкшие и повторяющиеся пароли."],
   samsung:["Настройки → Google → Автозаполнение → Менеджер паролей Google → Проверка паролей."],
@@ -196,16 +198,16 @@ var STEPS = {
  mail2fa:{q:"b2",title:"Второй шаг входа в основную почту",why:"Украденного пароля станет мало, чтобы войти в почту.",time:"10 минут",
   check:"В разделе безопасности почты второй шаг включён, а резервные коды хранятся не на этом телефоне.",
   all:["Gmail: Настройки → Google → Управление аккаунтом Google → Безопасность → Двухэтапная аутентификация. Выберите подтверждение на телефоне или приложение, а не SMS.","Яндекс: id.yandex.ru → Безопасность → «Способ входа в профиль» → пароль и код из приложения Яндекс ID.","Mail.ru: на сайте Настройки → Все настройки → Безопасность → Двухфакторная аутентификация. Здесь доступен только SMS, поэтому защитите и номер телефона.","Сохраните резервные коды на бумаге или в менеджере паролей."]},
- recovery:{q:"b3",title:"Свои способы восстановления почты",why:"Вернуть почту сможете Вы и только Вы – даже без этого телефона.",time:"10 минут",
+ recovery:{q:"b3",title:"Свои способы восстановления почты",why:"Актуальные способы восстановления помогают вернуть доступ к почте при потере телефона.",time:"10 минут",
   check:"Каждый номер и адрес для восстановления – Ваш и доступен Вам сегодня.",
   all:["Откройте раздел безопасности почты: номера телефонов и резервные адреса.","Удалите старые номера и адреса, а также контакты других людей.","Добавьте вторую свою почту у другого провайдера и защитите её вторым шагом входа.","Сохраните резервные коды не на этом телефоне."]},
- tg:{q:"b4",title:"Дополнительный пароль в мессенджере",why:"Мессенджер не угонят по одному коду из SMS.",time:"5 минут",
+ tg:{q:"b4",title:"Дополнительный пароль в мессенджере",why:"Дополнительный пароль снижает риск захвата аккаунта при утечке кода из SMS.",time:"5 минут",
   check:"Вход на новом устройстве требует дополнительный пароль, а в списке устройств только Ваши.",
   all:["Откройте настройки мессенджера → раздел о конфиденциальности или безопасности → включите дополнительный пароль: облачный пароль, двухшаговую проверку или PIN-код.","Укажите почту для восстановления этого пароля и сохраните пароль в менеджере паролей.","Там же откройте список устройств и завершите незнакомые сеансы.","Код из SMS никому не называйте: с ним чужой человек войдёт в аккаунт, если дополнительного пароля нет."]},
  access:{q:"c1",title:"Разделить доступ к устройствам и аккаунтам",why:"Каждый должен пользоваться своими учётными записями без доступа к Вашим паролям и почте.",time:"15 минут",
   check:"Близкие входят в собственные профили; Ваши почта, банк и сохранённые пароли им недоступны.",
   all:["Проверьте, кто знает пароли от Вашей почты и важных аккаунтов; смените общие пароли на уникальные.","На общих устройствах создайте отдельные профили и выйдите из личной почты и банковских приложений.","Проверьте активные сеансы в важных сервисах и завершите ненужные.","Если устройство используют дети, настройте отдельный детский профиль и ограничения установки приложений."]},
- codeword:{q:"c2",title:"Семейное кодовое слово",why:"Поддельный голос близкого не заставит Вас перевести деньги.",time:"10 минут разговора",
+ codeword:{q:"c2",title:"Семейное кодовое слово",why:"Кодовое слово и обратный звонок помогают проверить, кто просит перевести деньги.",time:"10 минут разговора",
   check:"Каждый в семье знает слово и правило перезвонить.",
   all:["Выберите слово, которого нет в соцсетях и которое не угадать.","Сообщите его голосом или лично, не пишите в мессенджере.","Звонок «я в беде» с просьбой о деньгах: спросите слово. Не знает – положите трубку и перезвоните по номеру из своей записной книжки."]}
 };
@@ -277,12 +279,11 @@ function renderIntro(){
   c.appendChild(el("h3",null,"Бесплатный экспресс-аудит цифровой безопасности"));
   c.appendChild(el("p",null,"До 10 простых вопросов, около 5 минут."));
   var card=el("div",{class:"card small"});
-  card.innerHTML="<h3>Зачем это нужно</h3><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их избежать, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ваши ответы остаются на Вашем устройстве.</p>";
+  card.innerHTML="<h3>Зачем это нужно</h3><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их снизить, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ваши ответы остаются на Вашем устройстве.</p>";
   c.appendChild(card);
   var r=el("div",{class:"row"});
   r.appendChild(el("button",{class:"btn",type:"button",onclick:function(){state.screen=has&&allAnswered()?"result":"q"; if(!has) state.idx=0; save();render();}},"Узнать свои риски"));
   c.appendChild(r);
-  c.appendChild(el("p",{class:"note"},"Нажимая кнопку «Узнать свои риски», Вы подтверждаете, что ознакомились с <a href='policy.html' target='_blank' rel='noopener'>Политикой обработки персональных данных</a> в соответствии с Федеральным законом № 152-ФЗ «О персональных данных»."));
   app.appendChild(c);
 }
 function allAnswered(){ return seq().every(function(q){ var a=A(q.id); return a!==null && (!q.multi || a.length>0); }); }
@@ -419,24 +420,34 @@ function renderResult(){
 
   if(R.plan.length){
     c.appendChild(el("h2",{style:"margin-top:22px"},"Ваш план: "+R.plan.length+" "+plural(R.plan.length,["шаг","шага","шагов"])));
-    c.appendChild(el("p",{class:"muted small"},"По каждому шагу выберите: сделаете сами по инструкции или нужна помощь. Почти всё бесплатно."));
+    c.appendChild(el("p",{class:"muted small"},"Базовые рекомендации доступны бесплатно. Помощь специалиста — за донат. Размер доната выбираете вы."));
     R.plan.forEach(function(k,i){
       var st=STEPS[k];
       var box=el("article",{class:"step"});
       box.innerHTML="<div class='head'><div class='num'>"+(i+1)+"</div><div><h3>"+esc(st.title)+"</h3><div class='meta'>"+esc(st.time)+" · бесплатно</div><div>"+esc(st.why)+"</div></div></div>";
       var acts=el("div",{class:"acts"});
-      var bI=el("button",{class:"btn ghost",type:"button","aria-expanded":state.open[k]?"true":"false"},state.open[k]?"Скрыть инструкцию":"Инструкция");
-      var bS=el("button",{class:"btn secondary",type:"button","aria-pressed":state.self[k]?"true":"false"},state.self[k]?"✓ Сделаю сам":"Сделаю сам");
-      var bH=el("button",{class:"btn secondary",type:"button","aria-pressed":state.help[k]?"true":"false"},state.help[k]?"✓ Нужна помощь":"Помощь специалиста за донат");
-      bI.addEventListener("click",function(){ state.open[k]=!state.open[k]; save(); render(); });
-      bS.addEventListener("click",function(){ state.self[k]=!state.self[k]; if(state.self[k]){ state.help[k]=false; state.open[k]=true; var gu=guideFor(k); if(gu){ save(); window.location.assign(gu); return; } } save(); render(); });
-      bH.addEventListener("click",function(){ state.help[k]=true; state.self[k]=false; save(); copyText("Нужна помощь: "+st.title+". Код результата: "+resultCode(compute())); if(HELP_URL){ window.open(HELP_URL,"_blank","noopener"); } render(); if(!HELP_URL){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
-      acts.appendChild(bI); acts.appendChild(bS); acts.appendChild(bH);
+      var guides = guidesFor(k);
+      var localId = "instruction-" + k;
+      guides.forEach(function(guide){
+        var label = guides.length > 1 ? "Сделаю сам · " + guide.name : "Сделаю сам";
+        acts.appendChild(el("a",{class:"btn secondary",href:guide.url+"#"+guide.steps[k]},label));
+      });
+      if(!guides.length){
+        var bS = el("button",{id:"self-"+k,class:"btn secondary",type:"button","aria-controls":localId,"aria-expanded":String(Boolean(state.open[k]))},state.open[k]?"Скрыть инструкцию":"Сделаю сам");
+        bS.addEventListener("click",function(){
+          state.open[k]=!state.open[k];
+          save(); render();
+          document.getElementById("self-"+k).focus();
+        });
+        acts.appendChild(bS);
+      }
+      var helpText="Здравствуйте! Нужна помощь специалиста Cyber Office за донат. Тема: "+st.title+". Подскажите условия.";
+      acts.appendChild(el("a",{class:"btn ghost",href:HELP_URL+"?text="+encodeURIComponent(helpText),target:"_blank",rel:"noopener noreferrer"},"Помощь специалиста за донат"));
       box.appendChild(acts);
-      if(state.open[k]){
-        var ins=el("div",{class:"instr"});
-        var gk=guideFor(k);
-        ins.innerHTML=(gk?"<a class='btn guide' href='"+gk+"' target='_blank' rel='noopener'>"+esc(GUIDES[platform()].label)+" →</a>":"")+"<b>Как сделать</b><ol>"+instrList(k).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ol><p class='chk'><b>Как проверить:</b> "+esc(st.check)+"</p>";
+      if(!guides.length){
+        var ins=el("div",{class:"instr",id:localId});
+        ins.hidden=!state.open[k];
+        ins.innerHTML="<b>Как сделать</b><ol>"+instrList(k).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ol><p class='chk'><b>Как проверить:</b> "+esc(st.check)+"</p>";
         box.appendChild(ins);
       }
       c.appendChild(box);
@@ -444,7 +455,16 @@ function renderResult(){
   }
 
   // Проводники для всех выбранных моделей, если они доступны.
-  platforms().forEach(function(p){ var g=GUIDES[p]; if(!g) return; var gc=el("section",{class:"card"}); gc.innerHTML="<h3>"+esc(g.whole)+": 6 самостоятельных настроек по 3–5 минут</h3><p class='small muted'>Начните с самой важной настройки и возвращайтесь к остальным в удобное время. После каждого этапа — проверка результата.</p><a class='btn' style='width:100%' href='"+g.url+"' target='_blank' rel='noopener'>"+esc(g.label)+"</a>"; c.appendChild(gc); });
+  platforms().forEach(function(p){
+    var guide=GUIDES[p];
+    if(!guide) return;
+    var card=el("section",{class:"card"});
+    card.appendChild(el("h3",null,"Защита "+guide.name));
+    card.appendChild(el("p",{class:"small muted"},guide.count+" самостоятельных настроек примерно по 3–5 минут. Начните с нужной и возвращайтесь к остальным в удобное время."));
+    var label=platforms().filter(function(type){ return GUIDES[type]; }).length > 1 ? "Настроить защиту · "+guide.name : "Настроить защиту";
+    card.appendChild(el("a",{class:"btn",href:guide.url,style:"display:block;text-align:center;text-decoration:none"},label));
+    c.appendChild(card);
+  });
 
   // следующий уровень: персональная диагностика
   var deep=el("section",{class:"card deep"});
