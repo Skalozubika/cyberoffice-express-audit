@@ -112,6 +112,9 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .toast.on{opacity:1}
 @media (min-width:600px){ .wrap{padding-top:36px} h1{font-size:30px} }
 .brand{flex-wrap:wrap;gap:8px}.emergency-link{color:inherit;display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}.acts .btn{text-align:center;text-decoration:none}
+a.btn{text-decoration:none;text-align:center}.contact-choice{display:flex;align-items:flex-start;gap:8px;margin:16px 0}.contact-choice input{margin-top:4px}.btn[hidden]{display:none}.map .item .top:not(:first-child){margin-top:8px}
+.contact-form{margin-top:16px}.contact-form fieldset{border:0;padding:0;margin:0;min-inline-size:0}.contact-form legend,.contact-field label,.contact-preview>label{font-weight:700}.contact-options{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px}.contact-options label{min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer}.contact-field label,.contact-preview>label{display:block;margin-bottom:6px}.contact-field input,.contact-preview textarea{width:100%;max-width:100%;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px}.contact-preview{margin-top:18px}.contact-preview textarea{resize:vertical}
+.intro-details summary{cursor:pointer;font-weight:700;padding-block:4px}.intro-details-body{margin-top:12px}.start-policy{margin:8px 0 20px;font-size:15px;line-height:1.5;color:var(--ink)}.start-policy a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 </style>
 </head>
 <body>
@@ -127,43 +130,57 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 
 /* ===== Настройки теста ===== */
 var HELP_URL = "https://t.me/Cyberoffice_help";           // ссылка на канал помощи Cyber Office (мессенджер, почта mailto: или сайт); пусто = канал ещё не подключён
-var HELP_LABEL = "Написать в Telegram";
-var HELP_EMAIL = "";         // запасной канал, например help@...
-var STORE = "co-express-v2";
+var STORE = "co-express-v3";
+var LEGACY_STORE = "co-express-v2";
 
 /* ===== Вопросы ===== */
-var THEMES = {A:"Смартфон, SIM и мошенники", B:"Пароли, почта и мессенджеры", C:"Семья"};
+var THEMES = {A:"Смартфон, SIM и мошенники", B:"Пароли, почта и мессенджеры", C:"Семья и домашняя сеть"};
 var Q = [
  {id:"a0", code:"А0", th:"A", scored:false, multi:true, text:"Какими телефонами Вы пользуетесь?", hint:"Можно выбрать несколько вариантов. Покажем инструкции для каждого выбранного типа.",
   opts:[{t:"iPhone",v:"ios"},{t:"Samsung",v:"samsung"},{t:"Другой Android",v:"android"},{t:"Не знаю",v:"unknown",excl:true}]},
- {id:"c0", code:"В0", th:"C", scored:false, multi:true, text:"Кто, кроме Вас, пользуется Вашими устройствами или может стать целью мошенников?", hint:"Можно выбрать несколько.",
-  opts:[{t:"Дети",v:"kids"},{t:"Родители",v:"parents"},{t:"Другие родные и близкие",v:"relatives"},{t:"Друзья и коллеги",v:"friends"},{t:"Помощники по дому или работе",v:"helpers"},{t:"Только я",v:"me",excl:true},{t:"Не знаю",v:"unknown",excl:true}]},
+ {id:"c0", code:"В0", th:"C", scored:false, text:"Кто, кроме Вас, может пользоваться Вашими устройствами?",
+  hint:"Злоумышленники могут использовать менее защищённые аккаунты и устройства Ваших близких, чтобы получить доступ к Вашим данным и деньгам.",
+  opts:[{t:"Дети",v:"kids"},{t:"Другие родные и близкие",v:"relatives"},{t:"Друзья и коллеги",v:"friends"},{t:"Помощники по дому или работе",v:"helpers"},{t:"Только я",v:"me",excl:true},{t:"Не знаю",v:"unknown",excl:true}]},
+ {id:"c1", code:"В1", th:"C", step:"access", only:"family", text:"Как дети или близкие пользуются Вашими устройствами и аккаунтами?",
+  why:"Доступ к основной почте или сохранённым паролям может дать доступ и к другим сервисам.",
+  opts:[{t:"У каждого своё устройство или отдельный профиль, мои аккаунты им недоступны",s:"Z"},{t:"Пользуются моим устройством, но перед этим я закрываю важные приложения",s:3},{t:"Пользуются моим устройством, часть моих аккаунтов остаётся открытой",s:4},{t:"Имеют доступ к моей почте или сохранённым паролям",s:5},{t:"Не знаю, какой доступ у них есть",s:"N",excl:true}]},
  {id:"a1", code:"А1", th:"A", step:"find", text:"Телефон потерялся. Сможете ли Вы с чужого устройства найти и заблокировать его?",
   why:"Если телефон нельзя быстро заблокировать, в нём остаются открытыми почта, банк и коды из SMS.",
-  opts:[{t:"Да, знаю как и помню пароль от аккаунта Apple или Google",s:"Z"},{t:"Поиск включён, но пароль от аккаунта не помню",s:3},{t:"Не знаю, включён ли поиск",s:"N"},{t:"Не задумывался",s:4}]},
- {id:"a3", code:"А3", th:"A", step:"call", text:"Вам звонят «из банка» или «полиции», знают Ваше имя. Просят код из SMS или перевод на «безопасный счёт». Как поступите?",
-  why:"Имя и детали могут быть известны из утечек. Даже самостоятельный ввод кода по просьбе звонящего опасен.",
-  opts:[{t:"Завершу звонок и сам проверю информацию по официальному номеру",s:"Z"},{t:"Положу трубку, но проверять не буду",s:3},{t:"Продолжу разговор, если всё звучит убедительно",s:4},{t:"Сам введу код по просьбе звонящего или назову его",s:5},{t:"Не знаю, как поступлю",s:"N"}]},
- {id:"b1", code:"Б1", th:"B", step:"pwd", multi:true, hint:"Можно выбрать несколько.", text:"Как устроены Ваши пароли?",
-  why:"Повторяющиеся пароли позволяют взломать другие аккаунты после одной утечки. Способ безопасного сохранения сам по себе не повышает риск.",
-  opts:[{t:"Повторяю один пароль или его варианты на разных сайтах",s:5},{t:"Пароли разные, но храню их в заметках или файле",s:4},{t:"Пароли уникальные, сохраняет телефон, браузер или менеджер паролей",s:"Z"},{t:"Не знаю, повторяются ли пароли",s:"N",excl:true}]},
+  opts:[{t:"Да, знаю как и могу войти в нужную учётную запись",s:"Z"},{t:"Поиск включён, но пароль от аккаунта не помню",s:3},{t:"Не знаю, включён ли поиск",s:"N"},{t:"Не задумывался",s:4}]},
+ {id:"a3", code:"А3", th:"A", step:"call", text:"Как Вы поступите, если звонящий попросит ввести код из SMS?",
+  scenario:"Вам звонит человек, представляется сотрудником банка или государственной службы. Он знает Ваше имя и паспортные данные, сообщает о подозрительной операции. Он спокойно отвечает на вопросы, и всё выглядит убедительно.\nЧерез несколько минут Вам приходит SMS с кодом. Собеседник просит помочь отменить подозрительную операцию.",
+  why:"Паспортные данные не подтверждают личность звонящего. Завершите разговор и проверьте информацию через официальное приложение или проверенный номер.",
+  opts:[{t:"Попрошу назвать дополнительные сведения. Если всё совпадёт, продолжу разговор",s:4,why:"Знание личных данных не подтверждает личность звонящего."},{t:"Не назову код, но могу самостоятельно ввести его для отмены операции",s:5,why:"Ввод кода по указанию звонящего может подтвердить чужую операцию или вход."},{t:"Завершу разговор. Если ничего не сообщал и не подтверждал, значит, всё в порядке",s:3,why:"Завершение звонка снижает риск. Проверьте, не было ли попытки входа или операции."},{t:"Завершу разговор и самостоятельно проверю информацию через официальное приложение или номер банка",s:"Z",why:"Самостоятельное обращение в организацию помогает проверить ситуацию."},{t:"Не уверен, как поступлю",s:"N",excl:true}]},
+ {id:"b1", code:"Б1", th:"B", step:"pwd", text:"Как Вы создаёте и храните свои пароли?",
+  hint:"Встроенные менеджеры Google, Apple и Samsung подходят для хранения паролей. Отметьте все привычки, которые у Вас есть.",
+  why:"Важны уникальность паролей и способ их хранения.",
+  opts:[{t:"Повторяю пароль или его варианты в разных сервисах",s:5,why:"Пароль из одной утечки могут попробовать в других сервисах."},{t:"Храню часть паролей в незащищённых заметках или файлах",s:4,why:"Любой, кто получит доступ к файлу или заметке, может прочитать пароли."},{t:"Создаю уникальные пароли и сохраняю их во встроенном или отдельном менеджере",s:"Z",why:"Уникальный пароль снижает риск для других аккаунтов при утечке."},{t:"Не знаю, повторяются ли некоторые пароли",s:"N",why:"Проверьте повторы в менеджере паролей."}]},
  {id:"b2", code:"Б2", th:"B", step:"mail2fa", text:"Как защищён вход в Вашу основную почту?", hint:"Основная почта часто служит ключом к другим сервисам: через неё можно восстанавливать пароли и подтверждать важные действия.",
   why:"Почта – ключ, через который восстанавливается почти всё остальное.",
   opts:[{t:"Пароль и код из приложения или подтверждение на телефоне",s:"Z"},{t:"Пароль и код по SMS",s:3},{t:"Только пароль",s:5},{t:"Не знаю",s:"N"}]},
  {id:"b3", code:"Б3", th:"B", step:"recovery", text:"Представьте, что Вы потеряли телефон и не можете войти в основную почту. Как восстановите доступ?",
   why:"Вернуть почту должны Вы – даже без этого телефона.",
-  opts:[{t:"Есть несколько своих способов: вторая почта, резервные коды",s:"Z"},{t:"Есть резервная почта, но доступ к ней тоже зависит от телефона",s:3},{t:"Только через мой номер телефона",s:4},{t:"Через номер или почту другого человека, других способов нет",s:5},{t:"Затрудняюсь ответить",s:"N"}]},
- {id:"b4", code:"Б4", th:"B", step:"tg", text:"Защищён ли вход в Ваш основной мессенджер дополнительным паролем?", hint:"В разных мессенджерах он называется по-разному: облачный пароль, двухшаговая проверка, PIN-код.",
+  opts:[{t:"Есть несколько своих способов: вторая почта, резервные коды",s:"Z"},{t:"Есть резервная почта, но доступ к ней тоже зависит от телефона",s:3},{t:"Только через мой номер телефона",s:4,excl:true},{t:"Через номер или почту другого человека, других способов нет",s:5,excl:true},{t:"Затрудняюсь ответить",s:"N"}]},
+ {id:"b4", code:"Б4", th:"B", step:"tg", text:"Защищён ли вход в Ваши мессенджеры дополнительным паролем?", hint:"В разных мессенджерах он называется по-разному: облачный пароль, двухшаговая проверка, PIN-код.",
   why:"Без дополнительного пароля мессенджер угоняют по одному коду из SMS и пишут Вашим близким от Вашего имени.",
-  opts:[{t:"Да",s:"Z"},{t:"Нет",s:4},{t:"Не знаю",s:"N"},{t:"Не пользуюсь мессенджерами",s:"X"}]},
- {id:"c1", code:"В1", th:"C", step:"access", only:"family", text:"Есть ли у близких доступ к Вашим устройствам или аккаунтам?",
-  why:"Чужой доступ к почте, сохранённым паролям и аккаунтам может привести к потере контроля над ними.",
-  opts:[{t:"Нет, у каждого свои учётные записи и устройства",s:"Z"},{t:"Пользуются общим устройством, но входят в отдельные профили",s:"Z"},{t:"Иногда пользуются моим разблокированным устройством, но не знают паролей",s:3},{t:"Знают мои пароли или могут открыть мою почту, банк либо аккаунты",s:5},{t:"Не знаю, у кого остался доступ",s:"N"}]},
+  opts:[{t:"Да, включён в одном или нескольких мессенджерах",s:"Z"},{t:"Хотя бы в одном мессенджере дополнительный пароль не включён",s:4},{t:"Не знаю",s:"N"},{t:"Не пользуюсь мессенджерами",s:"X"}]},
+
+ {id:"c3", code:"В3", th:"C", step:"wifi", text:"Как у Вас дома организован доступ к Wi-Fi?",
+  hint:"Устройства в одной сети могут взаимодействовать. Отдельная сеть для гостей помогает ограничить доступ к домашним устройствам.",
+  why:"Открытая сеть или общая сеть для гостей расширяет круг устройств, которые могут взаимодействовать с домашними устройствами.",
+  opts:[{t:"Для гостей и помощников есть отдельная сеть с ограниченным доступом к домашним устройствам",s:"Z"},{t:"Одна сеть только для домашних, защищённая паролем",s:3},{t:"Одна сеть для всех, включая гостей и помощников",s:4},{t:"Wi-Fi без пароля, подключиться может любой",s:5},{t:"Не знаю, как настроена сеть",s:"N",excl:true},{t:"Не пользуюсь домашним Wi-Fi",s:"X",excl:true}]},
  {id:"c2", code:"В2", th:"C", step:"codeword", only:"any", text:"Если близкий позвонит и попросит срочно перевести деньги, как Вы убедитесь, что это он?",
-  why:"Голос близкого можно подделать по нескольким секундам записи.",
+  why:"Даже знакомый голос не подтверждает, кто звонит. Перезвоните по сохранённому номеру.",
   opts:[{t:"У нас есть кодовое слово или правило перезвонить",s:"Z"},{t:"Узнаю по голосу",s:4},{t:"Не обсуждали",s:4}]}
 ];
-var QI = {}; Q.forEach(function(q){QI[q.id]=q;});
+var QI = {};
+Q.forEach(function(q){
+  QI[q.id]=q;
+  q.opts.forEach(function(option){
+    if(option.s==="X" || (option.s==="N" && q.id!=="b1")) option.excl=true;
+  });
+});
+QI.b2.opts[2].excl=true;
 
 /* ===== Шаги плана ===== */
 var GUIDES = {
@@ -207,6 +224,9 @@ var STEPS = {
  access:{q:"c1",title:"Разделить доступ к устройствам и аккаунтам",why:"Каждый должен пользоваться своими учётными записями без доступа к Вашим паролям и почте.",time:"15 минут",
   check:"Близкие входят в собственные профили; Ваши почта, банк и сохранённые пароли им недоступны.",
   all:["Проверьте, кто знает пароли от Вашей почты и важных аккаунтов; смените общие пароли на уникальные.","На общих устройствах создайте отдельные профили и выйдите из личной почты и банковских приложений.","Проверьте активные сеансы в важных сервисах и завершите ненужные.","Если устройство используют дети, настройте отдельный детский профиль и ограничения установки приложений."]},
+ wifi:{q:"c3",title:"Защитить домашний Wi-Fi",why:"Пароль и отдельная гостевая сеть ограничивают посторонние подключения.",time:"5–10 минут",
+  check:"Гостевая сеть имеет отдельный пароль. Доступ из неё к домашним устройствам выключен, если роутер поддерживает эту настройку.",
+  all:["Откройте официальное приложение или панель управления своего роутера.","Если основная сеть открыта, установите уникальный пароль и выберите WPA2 или WPA3 в зависимости от поддержки устройств.","Для гостей включите гостевую сеть с отдельным паролем. Если доступен параметр доступа гостей к локальной сети, отключите его."]},
  codeword:{q:"c2",title:"Семейное кодовое слово",why:"Кодовое слово и обратный звонок помогают проверить, кто просит перевести деньги.",time:"10 минут разговора",
   check:"Каждый в семье знает слово и правило перезвонить.",
   all:["Выберите слово, которого нет в соцсетях и которое не угадать.","Сообщите его голосом или лично, не пишите в мессенджере.","Звонок «я в беде» с просьбой о деньгах: спросите слово. Не знает – положите трубку и перезвоните по номеру из своей записной книжки."]}
@@ -214,46 +234,73 @@ var STEPS = {
 
 /* ===== Правила главного риска (порядок = приоритет) ===== */
 function A(id){ var a=state.ans[id]; return (a===undefined||a===null)?null:a; }
-function inn(id,arr){ var a=A(id); if(a===null) return false; if(Array.isArray(a)) return a.some(function(x){return arr.indexOf(x)>=0;}); return arr.indexOf(a)>=0; }
-var PRIORITY = {recovery:0,pwd:1,mail2fa:2,access:3,find:4,call:5,codeword:6,tg:7};
+function selected(id){
+  var a=A(id);
+  return Array.isArray(a) ? a : a===null ? [] : [a];
+}
+function inn(id,indices){ return selected(id).some(function(index){ return indices.indexOf(index)>=0; }); }
+var PRIORITY = {recovery:0,pwd:1,mail2fa:2,access:3,find:4,call:5,wifi:6,tg:7,codeword:8};
 var RULES = [
- {lvl:5,step:"recovery",when:function(){return A("b3")===3;},title:"Восстановление почты зависит от другого человека",chain:["Потеря доступа к почте","Код восстановления получает другой человек","Вы не можете самостоятельно вернуть аккаунт"],first:["Проверьте способы восстановления","Укажите свои резервные контакты","Защитите резервную почту"]},
+ {lvl:5,step:"recovery",when:function(){return inn("b3",[3]);},title:"Восстановление почты зависит от другого человека",chain:["Потеря доступа к почте","Код восстановления получает другой человек","Вы не можете самостоятельно вернуть аккаунт"],first:["Проверьте способы восстановления","Укажите свои резервные контакты","Защитите резервную почту"]},
  {lvl:5,step:"pwd",when:function(){return inn("b1",[0]);},title:"Повторяющиеся пароли открывают сразу несколько аккаунтов",chain:["Утечка пароля одного сайта","Тот же пароль пробуют на почте","Другие аккаунты оказываются под угрозой"],first:["Смените повторяющиеся пароли, начиная с почты","Включите второй шаг входа","Проверьте повторы в менеджере паролей"]},
- {lvl:5,step:"mail2fa",when:function(){return A("b2")===2;},title:"В основную почту можно войти по одному паролю",chain:["Пароль попадает в утечку","Посторонний входит в почту","Через почту восстанавливает другие аккаунты"],first:["Включите двухфакторную аутентификацию почты","Проверьте активные сеансы","Сохраните резервные способы восстановления"]},
- {lvl:5,step:"access",when:function(){return A("c1")===3;},title:"У близких есть доступ к Вашим важным аккаунтам",chain:["Общий пароль или открытый сеанс","Доступ к почте и личным данным","Потеря контроля над аккаунтом"],first:["Разделите профили на общих устройствах","Смените общие пароли","Завершите лишние сеансы"]},
- {lvl:5,step:"call",when:function(){return A("a3")===3;},title:"Ввод кода по просьбе звонящего может привести к потере денег",chain:["Звонок от имени банка","Просьба ввести или назвать код","Подтверждение чужого входа или операции"],first:["Не вводите коды по просьбе звонящего","Завершите разговор","Перезвоните по официальному номеру"]},
+ {lvl:5,step:"mail2fa",when:function(){return inn("b2",[2]);},title:"В основную почту можно войти по одному паролю",chain:["Пароль попадает в утечку","Посторонний входит в почту","Через почту восстанавливает другие аккаунты"],first:["Включите двухфакторную аутентификацию почты","Проверьте активные сеансы","Сохраните резервные способы восстановления"]},
+ {lvl:5,step:"access",when:function(){return inn("c1",[3]);},title:"У близких есть доступ к Вашим важным аккаунтам",chain:["Общий пароль или открытый сеанс","Доступ к почте и личным данным","Потеря контроля над аккаунтом"],first:["Разделите профили на общих устройствах","Смените общие пароли","Завершите лишние сеансы"]},
+ {lvl:5,step:"call",when:function(){return inn("a3",[1]);},title:"Ввод кода по просьбе звонящего может привести к потере денег",chain:["Звонок от имени банка","Просьба ввести или назвать код","Подтверждение чужого входа или операции"],first:["Не вводите коды по просьбе звонящего","Завершите разговор","Перезвоните по официальному номеру"]},
  {lvl:4,step:"pwd",when:function(){return inn("b1",[1]);},title:"Пароли в заметках или файле могут попасть посторонним",chain:["Доступ к файлу или заметке","Пароли оказываются открыты","Риск доступа к аккаунтам"],first:["Перенесите пароли в защищённый менеджер","Удалите открытый файл","Проверьте уникальность паролей"]},
- {lvl:4,step:"recovery",when:function(){return A("b3")===2;},title:"Восстановление почты зависит только от номера телефона",chain:["Потеря телефона или номера","Нет независимого способа восстановления","Доступ к почте затруднён"],first:["Добавьте резервную почту","Сохраните резервные коды вне телефона","Проверьте восстановление"]},
- {lvl:4,step:"tg",when:function(){return A("b4")===1;},title:"В мессенджере не включён дополнительный пароль",chain:["Злоумышленник получает код входа","Входит в мессенджер","Пишет близким от Вашего имени"],first:["Включите дополнительную защиту входа","Проверьте список устройств","Завершите незнакомые сеансы"]},
+ {lvl:4,step:"recovery",when:function(){return inn("b3",[2]);},title:"Восстановление почты зависит только от номера телефона",chain:["Потеря телефона или номера","Нет независимого способа восстановления","Доступ к почте затруднён"],first:["Добавьте резервную почту","Сохраните резервные коды вне телефона","Проверьте восстановление"]},
+ {lvl:4,step:"tg",when:function(){return inn("b4",[1]);},title:"В мессенджере не включён дополнительный пароль",chain:["Злоумышленник получает код входа","Входит в мессенджер","Пишет близким от Вашего имени"],first:["Включите дополнительную защиту входа","Проверьте список устройств","Завершите незнакомые сеансы"]},
+ {lvl:4,step:"call",when:function(){return inn("a3",[0]);},title:"Знание Ваших данных не подтверждает личность звонящего",chain:["Звонящий называет реальные сведения","Продолжает убеждать Вас","Может склонить к переводу или вводу кода"],first:["Завершите разговор","Свяжитесь с организацией через официальный канал"]},
+ {lvl:4,step:"access",when:function(){return inn("c1",[2]);},title:"На общем устройстве остаются открытые аккаунты",chain:["Устройство доступно близким","Приложения остаются открытыми","Другие люди могут увидеть данные или совершить действия от Вашего имени"],first:["Закрывайте важные приложения","Настройте отдельные профили или блокировку приложений"]},
+ {lvl:5,step:"wifi",when:function(){return inn("c3",[3]);},title:"К домашней сети можно подключиться без пароля",chain:["Постороннее устройство подключается к Wi-Fi","Оно оказывается в одной сети с домашними устройствами","Возрастает риск нежелательного доступа"],first:["Установите пароль для домашней сети","Включите WPA2 или WPA3","При необходимости настройте отдельную гостевую сеть"]},
+ {lvl:4,step:"wifi",when:function(){return inn("c3",[2]);},title:"Гости пользуются одной сетью с домашними устройствами",chain:["Гость подключается к Wi-Fi","Его устройство находится в общей сети","Открытые локальные сервисы могут оказаться доступны"],first:["Включите отдельную гостевую сеть","Проверьте, что гостям закрыт доступ к локальной сети"]},
  {lvl:4,step:"codeword",when:function(){return inn("c2",[1,2]);},title:"Поддельный голос близкого может убедить перевести деньги",chain:["Звонок с похожим голосом","Просьба срочно перевести деньги","Нет независимой проверки личности"],first:["Договоритесь о кодовом слове","Перезванивайте по сохранённому номеру","Предупредите близких"]}
 ];
-function firedRules(){return RULES.filter(function(r){try{return r.when();}catch(e){return false;}}).sort(function(a,b){return b.lvl-a.lvl || PRIORITY[a.step]-PRIORITY[b.step];});}
-
 /* ===== Состояние ===== */
-var state = {ans:{}, idx:0, screen:"intro", self:{}, help:{}, open:{}};
-function load(){ try{ var s=localStorage.getItem(STORE); if(s){ var o=JSON.parse(s); if(o&&o.ans){ state=Object.assign(state,o); } } }catch(e){} }
+function emptyState(){ return {ans:{},idx:0,screen:"intro",open:{},auditId:null}; }
+var state=emptyState();
+function load(){
+  try {
+    var raw=localStorage.getItem(STORE);
+    if(raw){
+      var saved=JSON.parse(raw);
+      if(saved && saved.ans) state=Object.assign(emptyState(),saved);
+      return;
+    }
+    var legacy=JSON.parse(localStorage.getItem(LEGACY_STORE));
+    if(!legacy || !legacy.ans) return;
+    var mappings={c0:[0,1,1,2,3,4,5],a3:[3,2,0,1,4],c1:[0,0,1,3,4]};
+    Object.keys(legacy.ans).forEach(function(id){
+      if(!QI[id]) return;
+      var old=[].concat(legacy.ans[id]);
+      state.ans[id]=old.map(function(i){return mappings[id]?mappings[id][i]:i;})
+        .filter(function(i,index,values){ return Boolean(QI[id].opts[i]) && values.indexOf(i)===index; });
+    });
+    cleanup();
+    if(legacy.screen!=="intro"){
+      state.screen="q";
+      state.idx=Math.max(0,seq().findIndex(function(q){ return !selected(q.id).length; }));
+    }
+    localStorage.setItem(STORE,JSON.stringify(state));
+    localStorage.removeItem(LEGACY_STORE);
+  } catch(e){}
+}
 function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
-function wipe(){ try{ localStorage.removeItem(STORE); }catch(e){} state={ans:{},idx:0,screen:"intro",self:{},help:{},open:{}}; render(); toast("Ответы удалены с этого устройства"); }
-
-function family(){ var a=A("c0")||[]; var has=function(i){return a.indexOf(i)>=0;}; return {kids:has(0), others:has(1)||has(2)||has(3)||has(4), unknown:has(6), me:has(5), list:a.map(function(i){return QI.c0.opts[i].t.toLowerCase();})}; }
 function seq(){
-  var f=family();
   return Q.filter(function(q){
-    if(q.only==="family") return f.kids||f.others;
-    if(q.only==="any") return f.kids||f.others||f.unknown;
+    if(q.only==="family") return inn("c0",[0,1]);
+    if(q.only==="any") return inn("c0",[0,1,2,3,5]);
     return true;
   });
 }
 function stateOf(q){
-  var a=A(q.id); if(a===null) return null;
-  if(!Array.isArray(a)) return q.opts[a].s;
-  if(!a.length) return null;
-  var best=null, bl=-1;
-  a.forEach(function(i){ var st=q.opts[i].s, l=lvlOf(st); if(l>bl){ bl=l; best=st; } });
-  return best;
+  var scores=selected(q.id).map(function(i){ return q.opts[i].s; });
+  var severity=Math.max(0,...scores.map(lvlOf));
+  if(severity) return severity;
+  if(scores.indexOf("N")>=0) return "N";
+  return scores[0] || null;
 }
-function lvlOf(s){ if(s===null||s===undefined) return 0; if(s==="N") return 0; if(s==="Z"||s==="X") return 0; return s; }
-function platforms(){ var a=A("a0"); if(a===null) return []; return (Array.isArray(a)?a:[a]).map(function(i){return Q[0].opts[i]&&Q[0].opts[i].v;}).filter(Boolean); }
+function lvlOf(s){ return typeof s==="number" ? s : 0; }
+function platforms(){ return selected("a0").map(function(i){ return QI.a0.opts[i].v; }); }
 function platform(){ var p=platforms(); return p.length===1?p[0]:"unknown"; }
 
 /* ===== Помощники ===== */
@@ -274,19 +321,18 @@ function renderIntro(){
   var has=Object.keys(state.ans).length>0;
   var c=el("div");
   c.appendChild(el("h1",null,"КИБЕРОФИС «CYBER OFFICE»"));
-  c.appendChild(el("h2",null,"Ваша безопасность в цифровом мире"));
-  c.appendChild(el("p",{class:"muted"},"Помогаем защитить себя и близких от цифровых рисков."));
   c.appendChild(el("h3",null,"Бесплатный экспресс-аудит цифровой безопасности"));
-  c.appendChild(el("p",null,"До 10 простых вопросов, около 5 минут."));
-  var card=el("div",{class:"card small"});
-  card.innerHTML="<h3>Зачем это нужно</h3><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их снизить, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ваши ответы остаются на Вашем устройстве.</p>";
-  c.appendChild(card);
+  c.appendChild(el("p",null,"До 11 вопросов, около 5 минут."));
+  var card=el("details",{class:"card small intro-details"});
+  card.innerHTML="<summary>Что даст аудит и как отвечать</summary><div class='intro-details-body'><h3>Зачем это нужно</h3><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их снизить, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ответы сохраняются в этом браузере. Вы сами решаете, отправлять ли рекомендации или связываться с нами.</p></div>";
   var r=el("div",{class:"row"});
-  r.appendChild(el("button",{class:"btn",type:"button",onclick:function(){state.screen=has&&allAnswered()?"result":"q"; if(!has) state.idx=0; save();render();}},"Узнать свои риски"));
+  r.appendChild(el("button",{class:"btn",type:"button","aria-describedby":"start-policy",onclick:function(){state.screen=has&&allAnswered()?"result":"q"; if(!has) state.idx=0; if(state.screen==="result"&&!state.auditId) state.auditId=createAuditId(); save();render();}},"Узнать свои риски"));
   c.appendChild(r);
+  c.appendChild(el("p",{class:"start-policy",id:"start-policy"},"Нажимая кнопку «Узнать свои риски», Вы подтверждаете, что ознакомились с <a href='policy.html'>Политикой обработки персональных данных</a> в соответствии с Федеральным законом №152-ФЗ «О персональных данных»."));
+  c.appendChild(card);
   app.appendChild(c);
 }
-function allAnswered(){ return seq().every(function(q){ var a=A(q.id); return a!==null && (!q.multi || a.length>0); }); }
+function allAnswered(){ return seq().every(function(q){ return selected(q.id).length>0; }); }
 
 function renderQ(){
   var s=seq(); if(state.idx>=s.length) state.idx=s.length-1; if(state.idx<0) state.idx=0;
@@ -295,36 +341,43 @@ function renderQ(){
   var meta=el("div",{class:"qmeta"},"<span>"+esc(THEMES[q.th])+"</span><span>Вопрос "+(state.idx+1)+" из "+s.length+"</span>");
   wrap.appendChild(meta);
   var pr=el("div",{class:"progress"}); var bar=el("i"); bar.style.width=Math.round(state.idx/s.length*100)+"%"; pr.appendChild(bar); wrap.appendChild(pr);
-  wrap.appendChild(el("div",{class:"qtext",id:"qtext"},esc(q.text)));
+  if(q.scenario) q.scenario.split("\n").forEach(function(paragraph){ wrap.appendChild(el("p",null,esc(paragraph))); });
+  var question=q.text;
+  if(q.id==="c1" && !inn("c0",[1])) question="Как дети пользуются Вашими устройствами и аккаунтами?";
+  if(q.id==="c1" && !inn("c0",[0])) question="Как близкие пользуются Вашими устройствами и аккаунтами?";
+  wrap.appendChild(el("div",{class:"qtext",id:"qtext"},esc(question)));
   if(q.hint) wrap.appendChild(el("p",{class:"muted small"},esc(q.hint)));
+  if(q.id!=="b1" && q.id!=="a0") {
+    wrap.appendChild(el("p",{class:"muted small"},"Можно выбрать несколько подходящих вариантов."));
+  }
   var opts=el("div",{class:"opts",role:"group","aria-labelledby":"qtext"});
-  var cur=A(q.id);
+  var current=selected(q.id);
   q.opts.forEach(function(o,i){
-    var pressed = q.multi ? (cur||[]).indexOf(i)>=0 : cur===i;
-    var b=el("button",{class:"opt"+(q.multi?" multi":""),type:"button","aria-pressed":pressed?"true":"false"},"<span class='mark' aria-hidden='true'></span><span>"+esc(o.t)+"</span>");
+    var id="option-"+i;
+    var b=el("button",{id:id,class:"opt multi",type:"button","aria-pressed":String(current.indexOf(i)>=0)},"<span class='mark' aria-hidden='true'></span><span>"+esc(o.t)+"</span>");
     b.addEventListener("click",function(){
-      if(q.multi){
-        var a=(A(q.id)||[]).slice();
-        if(o.excl){ a=[i]; }
-        else{
-          a=a.filter(function(x){return !q.opts[x].excl;});
-          var p=a.indexOf(i); if(p>=0) a.splice(p,1); else a.push(i);
-        }
-        state.ans[q.id]=a;
-      } else state.ans[q.id]=i;
+      if(current.indexOf(i)>=0) state.ans[q.id]=current.filter(function(index){return index!==i;});
+      else if(o.excl) state.ans[q.id]=[i];
+      else state.ans[q.id]=current.filter(function(index){return !q.opts[index].excl;}).concat(i);
       cleanup(); save(); renderQ_refresh();
+      document.getElementById(id).focus();
     });
     opts.appendChild(b);
   });
   wrap.appendChild(opts);
   var r=el("div",{class:"row"});
   r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){ if(state.idx===0){state.screen="intro";} else state.idx--; save(); render(); }},"Назад"));
-  var ok = q.multi ? (cur&&cur.length>0) : cur!==null;
   var next=el("button",{class:"btn",type:"button",id:"next",onclick:function(){
-    var s2=seq(); if(state.idx>=s2.length-1){ state.screen="result"; } else state.idx++;
+    var order=seq();
+    if(state.idx<order.length-1) state.idx++;
+    else if(!allAnswered()) state.idx=order.findIndex(function(question){ return !selected(question.id).length; });
+    else {
+      state.screen="result";
+      if(!state.auditId) state.auditId=createAuditId();
+    }
     save(); render(); window.scrollTo(0,0);
   }}, state.idx===s.length-1?"Показать результат":"Далее");
-  if(!ok) next.disabled=true;
+  if(!current.length) next.disabled=true;
   r.appendChild(next);
   wrap.appendChild(r);
   app.appendChild(wrap);
@@ -333,45 +386,169 @@ function renderQ_refresh(){ app.innerHTML=""; renderQ(); }
 function cleanup(){ var keep={}; seq().forEach(function(q){keep[q.id]=1;}); Object.keys(state.ans).forEach(function(k){ if(!keep[k]) delete state.ans[k]; }); }
 
 /* ===== Результат ===== */
+var RELATED = {pwd:["mail2fa","recovery","access"],mail2fa:["pwd","recovery","access"],recovery:["pwd","mail2fa","access"],access:["pwd","mail2fa","recovery"]};
+var VERIFY = {
+  find:"Проверьте, включён ли поиск телефона и виден ли он с другого устройства.",
+  call:"Запомните порядок: завершите разговор и обратитесь в организацию по официальному каналу.",
+  pwd:"Запустите проверку повторов в менеджере паролей.",
+  mail2fa:"Посмотрите способы подтверждения входа в настройках безопасности почты.",
+  recovery:"Проверьте, доступен ли хотя бы один резервный способ без этого телефона.",
+  tg:"Проверьте наличие дополнительного пароля в настройках мессенджера.",
+  access:"Посмотрите, какие профили и приложения открываются на общем устройстве.",
+  wifi:"Проверьте, защищена ли домашняя сеть паролем и есть ли отдельная гостевая сеть."
+};
 function compute(){
-  var s=seq(), fired=firedRules();
-  var states={}, maxL=0, anyN=false, any23=false;
-  s.forEach(function(q){ if(q.scored===false) return; var st=stateOf(q); states[q.id]=st; var l=lvlOf(st); if(st==="N") anyN=true; if(l===2||l===3) any23=true; if(l>maxL) maxL=l; });
-  fired.forEach(function(r){ if(r.lvl>maxL) maxL=r.lvl; });
+  var questions=seq().filter(function(q){return q.scored!==false;});
+  var byStep={};
+  questions.forEach(function(q){
+    var score=stateOf(q), level=lvlOf(score);
+    if(level) byStep[q.step]=level;
+  });
+  function impact(step){
+    return (RELATED[step]||[]).filter(function(other){return byStep[other]>=4;}).length;
+  }
+  var plan=Object.keys(byStep).sort(function(a,b){
+    return byStep[b]-byStep[a] || impact(b)-impact(a) || PRIORITY[a]-PRIORITY[b];
+  });
+  var scenarios=plan.map(function(step){
+    var level=byStep[step], question=QI[STEPS[step].q];
+    return RULES.find(function(rule){return rule.step===step && rule.lvl===level && rule.when();}) ||
+      {step:step,lvl:level,title:question.why,chain:[],first:instrList(step).slice(0,2)};
+  });
+  var unknown=questions.filter(function(q){
+    return selected(q.id).some(function(i){return q.opts[i].s==="N";});
+  });
+  var max=plan.length ? byStep[plan[0]] : 0;
   var verdict;
-  if(maxL>=5) verdict={cls:"crit",lbl:"Есть критический риск",txt:"Один такой риск может перечеркнуть остальные правильные настройки. Начните с главного риска ниже."};
-  else if(maxL===4) verdict={cls:"warn",lbl:"Есть риски, которые стоит закрыть",txt:"По Вашим ответам есть подтверждённые пробелы, которые стоит исправить."};
-  else if(any23) verdict={cls:"warn",lbl:"Основа есть, но есть пробелы",txt:"Главное у Вас уже сделано. Осталось закрыть несколько мелких дыр."};
-  else if(anyN) verdict={cls:"warn",lbl:"Есть настройки, которые стоит проверить",txt:"Подтверждённых рисков по ответам не выявлено, но часть настроек Вам пока неизвестна."};
-  else verdict={cls:"ok",lbl:"Серьёзных рисков по Вашим ответам не видно",txt:"Это оценка по ответам, а не проверка телефона. Раз в полгода стоит пройти аудит снова."};
-  // план: шаг главного риска первым, остальные по уровню риска
-  var score={}, order={};
-  fired.forEach(function(r,i){ if(!(r.step in score)){ score[r.step]=r.lvl; order[r.step]=i; } else if(r.lvl>score[r.step]) score[r.step]=r.lvl; });
-  s.forEach(function(q){ if(!q.step) return; var l=lvlOf(states[q.id]); if(l>0 && states[q.id]!=="N"){ if(!(q.step in score)||l>score[q.step]) score[q.step]=l; if(!(q.step in order)) order[q.step]=100+PRIORITY[q.step]; } });
-  var keys=Object.keys(score).filter(function(k){ return STEPS[k] && s.indexOf(QI[STEPS[k].q])>=0; });
-  var mainStep = fired.length ? fired[0].step : null;
-  keys.sort(function(a,b){ if(a===mainStep) return -1; if(b===mainStep) return 1; return (score[b]-score[a]) || ((PRIORITY[a]===undefined?99:PRIORITY[a])-(PRIORITY[b]===undefined?99:PRIORITY[b])); });
-  var plan=keys;
-  plan=plan.slice(0,5);
-  return {fired:fired, states:states, verdict:verdict, plan:plan, unknown:s.filter(function(q){return q.scored!==false && states[q.id]==="N";})};
+  if(max>=5) verdict={cls:"crit",lbl:"Есть критический риск",txt:"Начните с первого шага плана."};
+  else if(max===4) verdict={cls:"warn",lbl:"Есть риски, которые стоит снизить",txt:"Начните с рекомендации с наибольшим приоритетом."};
+  else if(max===3) verdict={cls:"warn",lbl:"Есть настройки, которые можно улучшить",txt:"Посмотрите план и начните с первого шага."};
+  else if(unknown.length) verdict={cls:"warn",lbl:"Есть настройки, которые стоит проверить",txt:"По ответам пока недостаточно сведений для оценки этих настроек."};
+  else verdict={cls:"ok",lbl:"В ответах нет признаков серьёзного риска",txt:"Оценка основана на Ваших ответах."};
+  return {scenarios:scenarios,verdict:verdict,plan:plan,unknown:unknown};
 }
 function chip(st){
-  if(st==="Z") return "<span class='chip cZ'>По Вашим словам защищено</span>";
+  if(st==="Z") return "<span class='chip cZ'>Низкий риск · 1/5</span>";
   if(st==="X") return "<span class='chip cX'>Не относится</span>";
   if(st==="N") return "<span class='chip cN'>Стоит проверить</span>";
-  if(st===5) return "<span class='chip c5'>Критично</span>";
-  if(st===4) return "<span class='chip c4'>Открытый риск</span>";
-  return "<span class='chip c3'>Небольшой пробел</span>";
+  if(st===5) return "<span class='chip c5'>Критический риск · 5/5</span>";
+  if(st===4) return "<span class='chip c4'>Высокий риск · 4/5</span>";
+  return "<span class='chip c3'>Средний риск · 3/5</span>";
 }
-function resultCode(R){
-  var plat=platforms().map(function(p){return {ios:"iPhone",samsung:"Samsung",android:"Android",unknown:"не указан"}[p];}).join(", ")||"не указан";
-  var parts=[];
-  seq().forEach(function(q){ if(q.scored===false) return; var st=R.states[q.id]; var t = st==="Z"?"З":st==="X"?"–":st==="N"?"Н":"О"+st; parts.push(q.code+"-"+t); });
-  var fam=family(); var famTxt=fam.list.join(", ")||"не указано";
-  var TAG={find:"поиск",sim:"SIM",call:"звонки",pwd:"пароли",mail2fa:"вход в почту",recovery:"восстановление",tg:"мессенджер",access:"доступ близких",codeword:"кодовое слово"};
-  var self=R.plan.filter(function(k){return state.self[k];}).map(function(k){return TAG[k];});
-  var help=R.plan.filter(function(k){return state.help[k];}).map(function(k){return TAG[k];});
-  return "Телефон: "+plat+" · Семья: "+famTxt+" · "+parts.join(" ")+" · Главный: "+(R.fired[0]?R.fired[0].step:"нет")+" · Сам: "+(self.join(",")||"–")+" · Помощь: "+(help.join(",")||"–")+" · Диагностика: "+(state.deep?"да":"нет");
+function createAuditId(){
+  var bytes=new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return "CO-"+Array.from(bytes,function(byte){return byte.toString(16).padStart(2,"0");}).join("").toUpperCase();
+}
+function requestMessage(type,step){
+  var lines=["Здравствуйте! Обращение в Cyber Office.","Тип: "+type,"Аудит: "+state.auditId];
+  if(step) lines.push("Рекомендация: "+step+" · "+STEPS[step].title);
+  return lines;
+}
+function telegramLink(type,step){
+  return HELP_URL+"?text="+encodeURIComponent(requestMessage(type,step).join("\n"));
+}
+function renderFollowup(result){
+  var section=el("section",{class:"card",id:"followup"});
+  section.innerHTML="<h2>Получить рекомендации и оставить контакт</h2><p class='small'>Выберите, куда Вам ответить. Заявку принимает команда Cyber Office в Telegram. Для ответа можно указать email, номер телефона или текущий чат Telegram.</p>";
+  section.appendChild(el("button",{class:"btn secondary",type:"button",onclick:function(){downloadPlan(result);}},"Скачать без контакта"));
+  var form=el("form",{class:"contact-form"});
+  form.innerHTML="<fieldset><legend>Куда Вам ответить?</legend><div class='contact-options'>"+
+    "<label><input name='reply' type='radio' value='telegram' checked> Telegram</label>"+
+    "<label><input name='reply' type='radio' value='email'> Email</label>"+
+    "<label><input name='reply' type='radio' value='phone'> Телефон</label></div>"+
+    "<p class='small muted' id='telegram-contact-note'>Ответим в том же личном чате Telegram.</p>"+
+    "<div class='contact-field' hidden><label for='reply-value' id='reply-label'></label><input id='reply-value' maxlength='254'></div></fieldset>"+
+    "<label class='contact-choice'><input id='reply-permission' type='checkbox' required> <span>Согласен(на) на обработку выбранного контакта для ответа на мой запрос. <a href='policy.html'>Политика обработки персональных данных</a>.</span></label>"+
+    "<button class='btn' type='submit'>Подготовить заявку</button>";
+  var preview=el("div",{class:"contact-preview",hidden:""});
+  preview.innerHTML="<label for='request-preview'>Текст заявки</label><textarea id='request-preview' rows='7' readonly></textarea>"+
+    "<p class='note'>Скопируйте текст, откройте Telegram, вставьте его в чат и отправьте. Заявка поступит команде после отправки сообщения.</p>"+
+    "<div class='row'><button class='btn secondary' type='button'>Скопировать заявку</button>"+
+    "<a class='btn' href='"+esc(HELP_URL)+"' target='_blank' rel='noopener noreferrer'>Открыть Telegram</a></div><p class='note' role='status'></p>";
+  var field=form.querySelector(".contact-field");
+  var input=form.querySelector("#reply-value");
+  var telegramNote=form.querySelector("#telegram-contact-note");
+  var draft=preview.querySelector("textarea");
+  var status=preview.querySelector("[role='status']");
+  function clearPreview(){
+    preview.hidden=true;
+    draft.value="";
+    status.textContent="";
+  }
+  function changeChannel(){
+    var channel=form.elements.reply.value;
+    var isTelegram=channel==="telegram", isEmail=channel==="email";
+    field.hidden=isTelegram;
+    telegramNote.hidden=!isTelegram;
+    input.value="";
+    input.setCustomValidity("");
+    input.required=!isTelegram;
+    input.type=isEmail?"email":"tel";
+    input.autocomplete=isEmail?"email":"tel";
+    form.querySelector("#reply-label").textContent=isEmail?"Ваш email":"Ваш номер телефона";
+    clearPreview();
+  }
+  form.querySelectorAll("input[name='reply']").forEach(function(radio){
+    radio.addEventListener("change",changeChannel);
+  });
+  form.addEventListener("input",function(){
+    input.setCustomValidity("");
+    clearPreview();
+  });
+  form.addEventListener("submit",function(event){
+    event.preventDefault();
+    var channel=form.elements.reply.value, value=input.value.trim();
+    if(channel==="phone" && (!/^\+?[0-9 ().-]+$/.test(value) || !/^[0-9]{7,15}$/.test(value.replace(/\D/g,"")))){
+      input.setCustomValidity("Введите номер телефона с кодом страны или города.");
+      input.reportValidity();
+      return;
+    }
+    var lines=requestMessage("Запрос рекомендаций");
+    var reply=channel==="telegram"?"в этот чат Telegram":(channel==="email"?"по email ":"по телефону ")+value;
+    lines.push("Прошу ответить "+reply+".");
+    lines.push("Согласен(на) на обработку выбранного контакта для ответа на мой запрос.");
+    if(result.plan.length) lines.push("Мой план: "+result.plan.map(function(key){return STEPS[key].title;}).join("; "));
+    draft.value=lines.join("\n");
+    preview.hidden=false;
+    draft.focus();
+  });
+  preview.querySelector("button").addEventListener("click",async function(){
+    try {
+      await navigator.clipboard.writeText(draft.value);
+      status.textContent="Заявка скопирована.";
+    } catch(e){
+      draft.focus();
+      draft.select();
+      status.textContent="Текст выделен. Скопируйте его средствами браузера.";
+    }
+  });
+  changeChannel();
+  section.appendChild(form);
+  section.appendChild(preview);
+  return section;
+}
+function downloadPlan(result){
+  var lines=["Киберофис · Экспресс-аудит",result.verdict.lbl,""];
+  result.plan.forEach(function(key,index){
+    lines.push((index+1)+". "+STEPS[key].title);
+    var guides=guidesFor(key);
+    if(guides.length) guides.forEach(function(guide){
+      lines.push("  • "+guide.name+": "+new URL(guide.url+"#"+guide.steps[key],location.href).href);
+    });
+    else instrList(key).forEach(function(item){lines.push("  • "+item);});
+    lines.push("  Проверка: "+STEPS[key].check,"");
+  });
+  if(result.unknown.length){
+    lines.push("Стоит проверить");
+    result.unknown.forEach(function(q){lines.push("  • "+VERIFY[q.step]);});
+  }
+  var url=URL.createObjectURL(new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/plain;charset=utf-8"}));
+  var link=el("a",{href:url,download:"cyber-office-plan.txt"});
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
 function instrList(k){
   var st=STEPS[k], p=platform(), items=[];
@@ -390,31 +567,24 @@ function renderResult(){
   var R=compute();
   var c=el("div");
   c.appendChild(el("h1",null,"Ваш результат"));
+  c.appendChild(el("p",{class:"small muted"},"Номер аудита: "+esc(state.auditId)));
+  c.appendChild(el("p",{class:"small"}, "<a href='#followup'>Получить рекомендации на email, в Telegram или запросить звонок</a>"));
   c.appendChild(el("div",{class:"verdict "+R.verdict.cls},"<div class='lbl'>"+esc(R.verdict.lbl)+"</div><div>"+esc(R.verdict.txt)+"</div>"));
 
-  if(R.fired.length){
-    var m=R.fired[0];
+  if(R.scenarios.length && R.scenarios[0].lvl>=4){
+    var m=R.scenarios[0];
     var rk=el("section",{class:"risk"+(m.lvl<5?" l4":""),"aria-label":"Главный риск"});
-    rk.innerHTML="<div class='k'>Главный риск</div><div class='t'>"+esc(m.title)+"</div><div class='chain'>"+m.chain.map(function(x){return "<span>"+esc(x)+"</span>";}).join("")+"</div><h3>Что сделать в первую очередь</h3><ol class='first'>"+m.first.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ol>";
+    rk.innerHTML="<div class='k'>Главный риск</div><div class='t'>"+esc(m.title)+"</div>";
+    if(m.chain.length) rk.appendChild(el("div",{class:"chain"},m.chain.map(function(x){return "<span>"+esc(x)+"</span>";}).join("")));
+    rk.appendChild(el("h3",null,"Что сделать в первую очередь"));
+    rk.appendChild(el("ol",{class:"first"},m.first.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")));
+    rk.appendChild(el("a",{class:"btn",href:telegramLink("Помощь по рекомендации",m.step),target:"_blank",rel:"noopener noreferrer"},"Помогите с этим"));
     c.appendChild(rk);
-    if(R.fired.length>1){
-      var more=el("div",{class:"card small"},"<h3>Ещё сценарии по Вашим ответам</h3><ul style='margin:0;padding-left:18px'>"+R.fired.slice(1).map(function(r){return "<li>"+esc(r.title)+"</li>";}).join("")+"</ul>");
-      c.appendChild(more);
-    }
-  }
-
-  if(!R.fired.length && R.plan.length){
-    var k0=R.plan[0], q0=QI[STEPS[k0].q], l0=lvlOf(R.states[q0.id]);
-    if(l0>=4){
-      var fb=el("section",{class:"risk"+(l0<5?" l4":""),"aria-label":"Главный риск"});
-      fb.innerHTML="<div class='k'>Главный риск</div><div class='t'>"+esc(q0.why)+"</div><p style='margin:0'>Начните с шага 1 плана ниже: «"+esc(STEPS[k0].title)+"».</p>";
-      c.appendChild(fb);
-    }
   }
 
   if(R.unknown.length){
     var verify=el("section",{class:"card"});
-    verify.innerHTML="<h3>Стоит проверить</h3><p class='small muted'>Ответ «Не знаю» не считается подтверждённым риском.</p><ul>"+R.unknown.map(function(q){return "<li>"+esc(q.text)+"</li>";}).join("")+"</ul>";
+    verify.innerHTML="<h3>Стоит проверить</h3><p class='small muted'>Ответ «Не знаю» не считается подтверждённым риском.</p><ul>"+R.unknown.map(function(q){return "<li>"+esc(VERIFY[q.step])+"</li>";}).join("")+"</ul>";
     c.appendChild(verify);
   }
 
@@ -441,8 +611,7 @@ function renderResult(){
         });
         acts.appendChild(bS);
       }
-      var helpText="Здравствуйте! Нужна помощь специалиста Cyber Office за донат. Тема: "+st.title+". Подскажите условия.";
-      acts.appendChild(el("a",{class:"btn ghost",href:HELP_URL+"?text="+encodeURIComponent(helpText),target:"_blank",rel:"noopener noreferrer"},"Помощь специалиста за донат"));
+      acts.appendChild(el("a",{class:"btn ghost",href:telegramLink("Помощь по рекомендации за донат",k),target:"_blank",rel:"noopener noreferrer"},"Помощь специалиста за донат"));
       box.appendChild(acts);
       if(!guides.length){
         var ins=el("div",{class:"instr",id:localId});
@@ -469,25 +638,12 @@ function renderResult(){
   // следующий уровень: персональная диагностика
   var deep=el("section",{class:"card deep"});
   var topics=["Домашний Wi-Fi и умный дом","Компьютеры и ноутбуки","Банки, карты и платежи","Криптовалюта","Поездки","Помощники и персонал","Публичность и соцсети","Бизнес и рабочие аккаунты","Документы и резервные копии"];
-  deep.innerHTML="<div class='k'>Следующий уровень</div><h2>Персональная диагностика</h2><p class='small'>Экспресс-аудит проверил три темы: телефон, пароли и почту, семью. Персональная диагностика разбирает всю Вашу цифровую жизнь – и связи между аккаунтами, устройствами и людьми, которые не видны по отдельности. Итог – цифровой паспорт безопасности и план защиты для Вас и Вашей семьи.</p><div class='topics'>"+topics.map(function(t){return "<span>"+esc(t)+"</span>";}).join("")+"</div>";
-  var bD=el("button",{class:"btn",type:"button",style:"width:100%;margin-top:14px","aria-pressed":state.deep?"true":"false"},state.deep?"✓ Хочу персональную диагностику":"Хочу персональную диагностику");
-  bD.addEventListener("click",function(){ state.deep=true; save(); copyText("Хочу персональную диагностику. Код результата: "+resultCode(compute())); if(HELP_URL){ window.open(HELP_URL,"_blank","noopener"); } render(); if(!HELP_URL){ var h=document.getElementById("help"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); } });
-  deep.appendChild(bD);
-  deep.appendChild(el("p",{class:"note",style:"margin:10px 0 0"},"Мы скопируем код результата и откроем чат Cyber Office. Вставьте код в сообщение и отправьте – стоимость и формат обсудим в переписке."));
+  deep.innerHTML="<div class='k'>Следующий уровень</div><h2>Персональная диагностика</h2><p class='small'>Экспресс-аудит охватил телефон, пароли и почту, семью и домашний Wi-Fi. Персональная диагностика разбирает всю Вашу цифровую жизнь – и связи между аккаунтами, устройствами и людьми, которые не видны по отдельности. Итог – цифровой паспорт безопасности и план защиты для Вас и Вашей семьи.</p><div class='topics'>"+topics.map(function(t){return "<span>"+esc(t)+"</span>";}).join("")+"</div>";
+  deep.appendChild(el("a",{class:"btn",href:telegramLink("Персональная диагностика"),target:"_blank",rel:"noopener noreferrer"},"Хочу персональную диагностику"));
+  deep.appendChild(el("p",{class:"note"},"Откроется черновик с типом обращения и номером аудита. Формат и стоимость обсуждаются в чате."));
   c.appendChild(deep);
 
-  // помощь
-  var help=el("section",{class:"card",id:"help"});
-  var code=resultCode(R);
-  var ch = HELP_URL ? "<a class='btn' style='display:block;text-align:center;text-decoration:none' href='"+esc(HELP_URL)+"' target='_blank' rel='noopener'>"+esc(HELP_LABEL)+"</a>" :
-    "<p class='note'>Канал помощи подключается к началу теста. Пока отправьте этот код тому, кто прислал Вам ссылку.</p>";
-  help.innerHTML="<h2>Хотите, чтобы специалист прошёл это вместе с Вами?</h2><p class='small'>Скопируйте код результата и отправьте его нам – по нему видно, что настроить, без Ваших имени и телефона. Пароли и коды мы никогда не просим, а программы для управления Вашим телефоном не устанавливаем.</p><div class='code' id='code'>"+esc(code)+"</div>";
-  var copy=el("button",{class:"btn secondary",type:"button",style:"width:100%;margin-bottom:10px"},"Скопировать код результата");
-  copy.addEventListener("click",function(){ copyText(code); });
-  help.appendChild(copy);
-  help.appendChild(el("div",null,ch+(HELP_EMAIL?"<p class='note' style='margin-top:8px'>Запасной канал: "+esc(HELP_EMAIL)+"</p>":"")));
-  c.appendChild(help);
-
+  c.appendChild(renderFollowup(R));
 
   // карта
   var map=el("section",{class:"card map"});
@@ -495,33 +651,34 @@ function renderResult(){
   ["A","B","C"].forEach(function(th){
     var qs=seq().filter(function(q){return q.th===th && q.scored!==false;});
     map.appendChild(el("div",{class:"theme"},esc(THEMES[th])));
-    if(!qs.length){ map.appendChild(el("div",{class:"item"},"<div class='top'><span>Защищать некого</span><span class='chip cX'>Не относится</span></div>")); return; }
+    if(!qs.length){ map.appendChild(el("div",{class:"item"},"<div class='top'><span>Нет вопросов по этой теме</span><span class='chip cX'>Не относится</span></div>")); return; }
     qs.forEach(function(q){
-      var st=R.states[q.id];
-      map.appendChild(el("div",{class:"item"},"<div class='top'><span>"+esc(Array.isArray(A(q.id))?A(q.id).map(function(i){return q.opts[i].t;}).join("; "):q.opts[A(q.id)].t)+"</span>"+chip(st)+"</div><div class='why'>"+esc(q.why)+"</div>"));
+      var item=el("div",{class:"item"});
+      item.appendChild(el("p",{class:"why"},esc(q.text)));
+      selected(q.id).forEach(function(index){
+        var answer=q.opts[index];
+        item.appendChild(el("div",{class:"top"},"<span>"+esc(answer.t)+"</span>"+chip(answer.s)));
+        if(answer.why) item.appendChild(el("div",{class:"why"},esc(answer.why)));
+      });
+      if(!selected(q.id).some(function(index){return q.opts[index].why;})) item.appendChild(el("p",{class:"why"},esc(q.why)));
+      map.appendChild(item);
     });
   });
   c.appendChild(map);
 
   var r=el("div",{class:"row"});
   r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){ state.screen="q"; state.idx=0; save(); render(); window.scrollTo(0,0); }},"Изменить ответы"));
-  r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){state={ans:{},idx:0,screen:"intro",self:{},help:{},open:{}};save();render();window.scrollTo(0,0);}},"Начать заново"));
+  r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){state=emptyState();save();render();window.scrollTo(0,0);}},"Начать заново"));
   c.appendChild(r);
   var privacy=el("div",{class:"note",style:"margin-top:24px"});
   privacy.appendChild(el("p",null,"Это оценка по Вашим ответам, а не проверка телефона. Ответы сохраняются только в браузере этого устройства, чтобы Вы могли вернуться к результату. На общем устройстве другие пользователи этого браузера могут их увидеть."));
-  privacy.appendChild(el("button",{class:"btn ghost",type:"button",onclick:wipe},"Удалить мои ответы"));
   c.appendChild(privacy);
   app.appendChild(c);
 }
 function plural(n,f){ var a=n%10,b=n%100; if(a===1&&b!==11) return f[0]; if(a>=2&&a<=4&&(b<10||b>=20)) return f[1]; return f[2]; }
-function copyText(t){
-  function fallback(){ var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); toast("Код скопирован");}catch(e){ toast("Выделите код и скопируйте вручную"); } document.body.removeChild(ta); }
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){toast("Код скопирован");},fallback); } else fallback(); }catch(e){ fallback(); }
-}
-
-
 try { load(); render(); } catch (e) { console.error(e); app.innerHTML = "<section class='card'><h1>Не удалось открыть опросник</h1><p>Попробуйте открыть опубликованный сайт по HTTPS в обычном браузере или обновить страницу.</p></section>"; }
 })();
 </script>
 </body>
 </html>
+
