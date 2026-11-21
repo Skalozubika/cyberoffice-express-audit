@@ -113,8 +113,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 @media (min-width:600px){ .wrap{padding-top:36px} h1{font-size:30px} }
 .brand{flex-wrap:wrap;gap:8px}.emergency-link{color:inherit;display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}.acts .btn{text-align:center;text-decoration:none}
 a.btn{text-decoration:none;text-align:center}.contact-choice{display:flex;align-items:flex-start;gap:8px;margin:16px 0}.contact-choice input{margin-top:4px}.btn[hidden]{display:none}.map .item .top:not(:first-child){margin-top:8px}
-.contact-form{margin-top:16px}.contact-form fieldset{border:0;padding:0;margin:0;min-inline-size:0}.contact-form legend,.contact-field label,.contact-preview>label{font-weight:700}.contact-options{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px}.contact-options label{min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer}.contact-field label,.contact-preview>label{display:block;margin-bottom:6px}.contact-field input,.contact-preview textarea{width:100%;max-width:100%;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px}.contact-preview{margin-top:18px}.contact-preview textarea{resize:vertical}
-.intro-details summary{cursor:pointer;font-weight:700;padding-block:4px}.intro-details-body{margin-top:12px}.start-policy{margin:8px 0 20px;font-size:15px;line-height:1.5;color:var(--ink)}.start-policy a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.contact-form{margin-top:16px}.contact-form fieldset{border:0;padding:0;margin:0;min-inline-size:0}.contact-form legend,.contact-field label{font-weight:700}.contact-options{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px}.contact-options label{min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer}.contact-field label{display:block;margin-bottom:6px}.contact-field input{width:100%;max-width:100%;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px}
+.intro-explanation{margin-top:16px}.map summary{cursor:pointer;font-weight:700;font-size:18px}.protection{display:flex;align-items:center;gap:16px}.protection p{margin:6px 0 0}.protection .risk-flag{color:var(--crit)}.score-ring{--ring:var(--ok);flex:none;width:96px;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,var(--surface) 82%,transparent 84%),conic-gradient(var(--ring) var(--score),var(--line) 0);display:flex;flex-direction:column;justify-content:center;align-items:center;line-height:1.2}.crit .score-ring{--ring:var(--crit)}.warn .score-ring{--ring:var(--warn)}.score-ring strong{font-size:28px}.score-ring span{font-size:12px}@media(max-width:360px){.score-ring{width:74px}.protection{gap:10px;padding-inline:12px}}
 </style>
 </head>
 <body>
@@ -171,7 +171,7 @@ var Q = [
   opts:[{t:"Для гостей и помощников есть отдельная сеть с ограниченным доступом к домашним устройствам",s:"Z"},{t:"Одна сеть только для домашних, защищённая паролем",s:3},{t:"Одна сеть для всех, включая гостей и помощников",s:4},{t:"Wi-Fi без пароля, подключиться может любой",s:5},{t:"Не знаю, как настроена сеть",s:"N",excl:true},{t:"Не пользуюсь домашним Wi-Fi",s:"X",excl:true}]},
  {id:"c2", code:"В2", th:"C", step:"codeword", only:"any", text:"Если близкий позвонит и попросит срочно перевести деньги, как Вы убедитесь, что это он?",
   why:"Даже знакомый голос не подтверждает, кто звонит. Перезвоните по сохранённому номеру.",
-  opts:[{t:"У нас есть кодовое слово или правило перезвонить",s:"Z"},{t:"Узнаю по голосу",s:4},{t:"Не обсуждали",s:4}]}
+  opts:[{t:"У нас есть кодовое слово или правило перезвонить",s:"Z"},{t:"Узнаю по голосу",s:4},{t:"Не обсуждали",s:4},{t:"Не знаю",s:"N",excl:true}]}
 ];
 var QI = {};
 Q.forEach(function(q){
@@ -308,10 +308,20 @@ function el(tag, attrs, html){ var e=document.createElement(tag); if(attrs){ for
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 var tt; function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2200); }
 var app=document.getElementById("app");
+var preferredReply=null;
+var recommendationForm=null;
+var samsungTopic=new URLSearchParams(location.search).get("samsung");
+var samsungTopics=["code","find","theft","notifications","sim","passwords","telegram","other"];
 
 /* ===== Экраны ===== */
 function render(){
   app.innerHTML="";
+  if(samsungTopics.includes(samsungTopic)){
+    var modelRequest=renderFollowup(null,{topic:samsungTopic});
+    modelRequest.prepend(el("p",null,"<a href='samsung/'>← К руководству Samsung</a>"));
+    app.appendChild(modelRequest);
+    return;
+  }
   if(state.screen==="intro") return renderIntro();
   if(state.screen==="q") return renderQ();
   return renderResult();
@@ -323,12 +333,11 @@ function renderIntro(){
   c.appendChild(el("h1",null,"КИБЕРОФИС «CYBER OFFICE»"));
   c.appendChild(el("h3",null,"Бесплатный экспресс-аудит цифровой безопасности"));
   c.appendChild(el("p",null,"До 11 вопросов, около 5 минут."));
-  var card=el("details",{class:"card small intro-details"});
-  card.innerHTML="<summary>Что даст аудит и как отвечать</summary><div class='intro-details-body'><h3>Зачем это нужно</h3><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их снизить, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ответы сохраняются в этом браузере. Вы сами решаете, отправлять ли рекомендации или связываться с нами.</p></div>";
+  var card=el("section",{class:"card small intro-explanation"});
+  card.innerHTML="<h2>Зачем это нужно Вам?</h2><div><p>Наша цель — помочь увидеть риски, с которыми Вы каждый день сталкиваетесь в цифровом мире, понять, как их снизить, и научиться защищать себя и своих близких.</p><h3>Почему это важно</h3><p>Потерянный телефон, ненадёжный пароль или звонок мошенника могут привести к потере доступа к аккаунтам, утечке личных данных и потере денег. Многие риски можно снизить с помощью простых настроек.</p><p><b>Главное — знать, на что сейчас обратить внимание!</b></p><h3>Что Вы получите</h3><p>Персональные рекомендации на основе Ваших ответов: какие риски выявлены, что сделать в первую очередь и как проверить результат.</p><p>Вы сможете выполнить рекомендации самостоятельно по нашей инструкции или воспользоваться помощью специалиста «Киберофис».</p><h3>Как отвечать</h3><p>Чем точнее Ваши ответы, тем полезнее будут наши рекомендации. Постарайтесь отвечать честно, как есть на самом деле. Если сомневаетесь — проверьте или выберите «Не знаю». Мы поможем разобраться.</p><p>Мы не запрашиваем пароли, коды подтверждения, данные банковских карт и документы.</p><p>Ответы сохраняются в этом браузере. Вы сами решаете, отправлять ли рекомендации или связываться с нами.</p></div>";
   var r=el("div",{class:"row"});
-  r.appendChild(el("button",{class:"btn",type:"button","aria-describedby":"start-policy",onclick:function(){state.screen=has&&allAnswered()?"result":"q"; if(!has) state.idx=0; if(state.screen==="result"&&!state.auditId) state.auditId=createAuditId(); save();render();}},"Узнать свои риски"));
+  r.appendChild(el("button",{class:"btn",type:"button",onclick:function(){state.screen=has&&allAnswered()?"result":"q"; if(!has) state.idx=0; if(state.screen==="result"&&!state.auditId) state.auditId=createAuditId(); save();render();}},"Узнать свои риски"));
   c.appendChild(r);
-  c.appendChild(el("p",{class:"start-policy",id:"start-policy"},"Нажимая кнопку «Узнать свои риски», Вы подтверждаете, что ознакомились с <a href='policy.html'>Политикой обработки персональных данных</a> в соответствии с Федеральным законом №152-ФЗ «О персональных данных»."));
   c.appendChild(card);
   app.appendChild(c);
 }
@@ -395,14 +404,17 @@ var VERIFY = {
   recovery:"Проверьте, доступен ли хотя бы один резервный способ без этого телефона.",
   tg:"Проверьте наличие дополнительного пароля в настройках мессенджера.",
   access:"Посмотрите, какие профили и приложения открываются на общем устройстве.",
-  wifi:"Проверьте, защищена ли домашняя сеть паролем и есть ли отдельная гостевая сеть."
+  wifi:"Проверьте, защищена ли домашняя сеть паролем и есть ли отдельная гостевая сеть.",
+  codeword:"Уточните у близких, есть ли у Вас кодовое слово или правило перезвонить на знакомый номер перед переводом."
 };
 function compute(){
   var questions=seq().filter(function(q){return q.scored!==false;});
-  var byStep={};
+  var byStep={}, points=[];
+  var scale={Z:100,3:50,4:25,5:0};
   questions.forEach(function(q){
     var score=stateOf(q), level=lvlOf(score);
     if(level) byStep[q.step]=level;
+    if(Object.hasOwn(scale,score)) points.push(scale[score]);
   });
   function impact(step){
     return (RELATED[step]||[]).filter(function(other){return byStep[other]>=4;}).length;
@@ -425,7 +437,8 @@ function compute(){
   else if(max===3) verdict={cls:"warn",lbl:"Есть настройки, которые можно улучшить",txt:"Посмотрите план и начните с первого шага."};
   else if(unknown.length) verdict={cls:"warn",lbl:"Есть настройки, которые стоит проверить",txt:"По ответам пока недостаточно сведений для оценки этих настроек."};
   else verdict={cls:"ok",lbl:"В ответах нет признаков серьёзного риска",txt:"Оценка основана на Ваших ответах."};
-  return {scenarios:scenarios,verdict:verdict,plan:plan,unknown:unknown};
+  var protection=points.length ? Math.round(points.reduce(function(sum,n){return sum+n;},0)/points.length) : null;
+  return {scenarios:scenarios,verdict:verdict,plan:plan,unknown:unknown,protection:protection};
 }
 function chip(st){
   if(st==="Z") return "<span class='chip cZ'>Низкий риск · 1/5</span>";
@@ -448,107 +461,94 @@ function requestMessage(type,step){
 function telegramLink(type,step){
   return HELP_URL+"?text="+encodeURIComponent(requestMessage(type,step).join("\n"));
 }
-function renderFollowup(result){
-  var section=el("section",{class:"card",id:"followup"});
-  section.innerHTML="<h2>Получить рекомендации и оставить контакт</h2><p class='small'>Выберите, куда Вам ответить. Заявку принимает команда Cyber Office в Telegram. Для ответа можно указать email, номер телефона или текущий чат Telegram.</p>";
-  section.appendChild(el("button",{class:"btn secondary",type:"button",onclick:function(){downloadPlan(result);}},"Скачать без контакта"));
+function renderFollowup(result,request){
+  request=request||{};
+  var isPassport=request.passport, isSamsung=Boolean(request.topic);
+  var heading=isSamsung?"Получить инструкцию Samsung":isPassport?"Запросить цифровой паспорт":"Получить рекомендации";
+  var section=el("section",{class:"card",id:isPassport?"passport-contact":"followup"});
+  section.appendChild(el("h2",null,heading));
   var form=el("form",{class:"contact-form"});
-  form.innerHTML="<fieldset><legend>Куда Вам ответить?</legend><div class='contact-options'>"+
+  form.innerHTML="<fieldset><legend>"+(isPassport?"Выберите, куда Вам ответить":"Выберите, куда Вам отправить рекомендации")+"</legend><div class='contact-options'>"+
     "<label><input name='reply' type='radio' value='telegram' checked> Telegram</label>"+
     "<label><input name='reply' type='radio' value='email'> Email</label>"+
     "<label><input name='reply' type='radio' value='phone'> Телефон</label></div>"+
-    "<p class='small muted' id='telegram-contact-note'>Ответим в том же личном чате Telegram.</p>"+
-    "<div class='contact-field' hidden><label for='reply-value' id='reply-label'></label><input id='reply-value' maxlength='254'></div></fieldset>"+
-    "<label class='contact-choice'><input id='reply-permission' type='checkbox' required> <span>Согласен(на) на обработку выбранного контакта для ответа на мой запрос. <a href='policy.html'>Политика обработки персональных данных</a>.</span></label>"+
-    "<button class='btn' type='submit'>Подготовить заявку</button>";
-  var preview=el("div",{class:"contact-preview",hidden:""});
-  preview.innerHTML="<label for='request-preview'>Текст заявки</label><textarea id='request-preview' rows='7' readonly></textarea>"+
-    "<p class='note'>Скопируйте текст, откройте Telegram, вставьте его в чат и отправьте. Заявка поступит команде после отправки сообщения.</p>"+
-    "<div class='row'><button class='btn secondary' type='button'>Скопировать заявку</button>"+
-    "<a class='btn' href='"+esc(HELP_URL)+"' target='_blank' rel='noopener noreferrer'>Открыть Telegram</a></div><p class='note' role='status'></p>";
-  var field=form.querySelector(".contact-field");
-  var input=form.querySelector("#reply-value");
-  var telegramNote=form.querySelector("#telegram-contact-note");
-  var draft=preview.querySelector("textarea");
-  var status=preview.querySelector("[role='status']");
-  function clearPreview(){
-    preview.hidden=true;
-    draft.value="";
-    status.textContent="";
-  }
+    "<p class='small muted' data-reply-note></p>"+
+    (isSamsung?"<p class='contact-field'><label>Модель Samsung Galaxy <input name='model' required maxlength='80' placeholder='Например, Galaxy A55'></label></p>":"")+
+    "<div class='contact-field' data-email-field hidden><label>Ваш email <input name='address' type='email' autocomplete='email' maxlength='254'></label></div></fieldset>"+
+    "<div><label class='contact-choice'><input name='permission' type='checkbox' required> <span>Согласен(на) на обработку выбранного контакта для ответа на мой запрос.</span></label><p class='small'><a href='policy.html' target='_blank' rel='noopener'>Политика обработки персональных данных</a></p></div>"+
+    "<button class='btn' type='submit'>"+(isPassport?"Отправить запрос":isSamsung?"Отправить запрос на инструкцию":"Отправить рекомендации")+"</button>";
+  var field=form.querySelector("[data-email-field]");
+  var input=form.elements.address;
+  var note=form.querySelector("[data-reply-note]");
+  var notes={
+    telegram:"Откроется чат Cyber Office с готовым запросом. Отправьте его в Telegram, и команда ответит в этом чате.",
+    email:"Откроется готовое письмо команде Cyber Office. Отправьте его из почтовой программы. Команда ответит на указанный Вами адрес.",
+    phone:"Откроется чат Cyber Office с запросом на звонок. Добавьте свой номер в сообщение и отправьте его. Специалист позвонит Вам."
+  };
   function changeChannel(){
-    var channel=form.elements.reply.value;
-    var isTelegram=channel==="telegram", isEmail=channel==="email";
-    field.hidden=isTelegram;
-    telegramNote.hidden=!isTelegram;
-    input.value="";
-    input.setCustomValidity("");
-    input.required=!isTelegram;
-    input.type=isEmail?"email":"tel";
-    input.autocomplete=isEmail?"email":"tel";
-    form.querySelector("#reply-label").textContent=isEmail?"Ваш email":"Ваш номер телефона";
-    clearPreview();
+    var channel=form.elements.reply.value, isEmail=channel==="email";
+    field.hidden=!isEmail;
+    input.disabled=!isEmail;
+    input.required=isEmail;
+    note.textContent=notes[channel];
   }
-  form.querySelectorAll("input[name='reply']").forEach(function(radio){
-    radio.addEventListener("change",changeChannel);
-  });
-  form.addEventListener("input",function(){
-    input.setCustomValidity("");
-    clearPreview();
+  function sendRequest(){
+    var channel=form.elements.reply.value;
+    var type=isPassport?"Запрос «Цифровой паспорт безопасности»":isSamsung?"Запрос полной инструкции Samsung":channel==="phone"?"Запрос рекомендаций и звонка":"Запрос рекомендаций";
+    var lines=state.auditId?requestMessage(type):["Здравствуйте! Обращение в Cyber Office.","Тип: "+type];
+    lines.push(channel==="phone"?"Прошу позвонить мне. Мой номер: [добавьте номер телефона].":channel==="email"?"Прошу ответить по email: "+input.value.trim()+".":"Прошу ответить в этот чат Telegram.");
+    lines.push("Согласен(на) на обработку выбранного контакта для ответа на мой запрос.");
+    if(isPassport) lines.push("Приоритет: запрос на персональную диагностику.");
+    if(isSamsung){
+      var topics={code:"Код блокировки экрана",find:"Поиск через Samsung и Google",theft:"Защита от кражи",notifications:"Скрыть текст уведомлений",sim:"PIN-код SIM",passwords:"Проверить утёкшие пароли",telegram:"Защитить Telegram"};
+      lines.push("Модель: "+form.elements.model.value.trim());
+      if(topics[request.topic]) lines.push("Настройка: "+topics[request.topic]);
+      lines.push("Прошу прислать все шаги инструкции для моей модели.");
+    }
+    if(result && !isPassport && result.plan.length) lines.push("Мой план: "+result.plan.map(function(key){return STEPS[key].title;}).join("; "));
+    if(result && !isPassport && result.unknown.length) lines.push("Стоит проверить: "+result.unknown.map(function(q){return STEPS[q.step].title;}).join("; "));
+    if(!isSamsung && !isPassport) preferredReply={channel:channel,address:channel==="email"?input.value.trim():""};
+    if(channel==="email"){
+      var operatorEmail="9940404@mail.ru";
+      location.href="mailto:"+operatorEmail+"?subject="+encodeURIComponent((isPassport?"Приоритет · ":"")+type)+"&body="+encodeURIComponent(lines.join("\r\n"));
+      return;
+    }
+    window.open(HELP_URL+"?text="+encodeURIComponent(lines.join("\n")),"_blank","noopener,noreferrer");
+  }
+  form.addEventListener("change",function(event){
+    if(event.target.name!=="reply") return;
+    form.elements.permission.checked=false;
+    changeChannel();
   });
   form.addEventListener("submit",function(event){
     event.preventDefault();
-    var channel=form.elements.reply.value, value=input.value.trim();
-    if(channel==="phone" && (!/^\+?[0-9 ().-]+$/.test(value) || !/^[0-9]{7,15}$/.test(value.replace(/\D/g,"")))){
-      input.setCustomValidity("Введите номер телефона с кодом страны или города.");
-      input.reportValidity();
-      return;
-    }
-    var lines=requestMessage("Запрос рекомендаций");
-    var reply=channel==="telegram"?"в этот чат Telegram":(channel==="email"?"по email ":"по телефону ")+value;
-    lines.push("Прошу ответить "+reply+".");
-    lines.push("Согласен(на) на обработку выбранного контакта для ответа на мой запрос.");
-    if(result.plan.length) lines.push("Мой план: "+result.plan.map(function(key){return STEPS[key].title;}).join("; "));
-    draft.value=lines.join("\n");
-    preview.hidden=false;
-    draft.focus();
+    sendRequest();
   });
-  preview.querySelector("button").addEventListener("click",async function(){
-    try {
-      await navigator.clipboard.writeText(draft.value);
-      status.textContent="Заявка скопирована.";
-    } catch(e){
-      draft.focus();
-      draft.select();
-      status.textContent="Текст выделен. Скопируйте его средствами браузера.";
-    }
-  });
+  if(isSamsung && request.topic!=="other") form.elements.model.value="Galaxy S26";
+  if(!isSamsung && !isPassport) recommendationForm=form;
+  if(isPassport){
+    request.submit=function(){
+      var selectedChannel=recommendationForm.elements.reply.value;
+      var selectedAddress=recommendationForm.elements.address.value.trim();
+      if(preferredReply && preferredReply.channel===selectedChannel &&
+          (selectedChannel!=="email" || preferredReply.address===selectedAddress)){
+        form.elements.reply.value=preferredReply.channel;
+        input.value=preferredReply.address;
+        form.elements.permission.checked=true;
+        changeChannel();
+        form.requestSubmit();
+      } else {
+        section.hidden=false;
+        form.elements.reply.value=selectedChannel;
+        input.value=selectedAddress;
+        changeChannel();
+        form.querySelector("input[name='reply']:checked").focus();
+      }
+    };
+  }
   changeChannel();
   section.appendChild(form);
-  section.appendChild(preview);
   return section;
-}
-function downloadPlan(result){
-  var lines=["Киберофис · Экспресс-аудит",result.verdict.lbl,""];
-  result.plan.forEach(function(key,index){
-    lines.push((index+1)+". "+STEPS[key].title);
-    var guides=guidesFor(key);
-    if(guides.length) guides.forEach(function(guide){
-      lines.push("  • "+guide.name+": "+new URL(guide.url+"#"+guide.steps[key],location.href).href);
-    });
-    else instrList(key).forEach(function(item){lines.push("  • "+item);});
-    lines.push("  Проверка: "+STEPS[key].check,"");
-  });
-  if(result.unknown.length){
-    lines.push("Стоит проверить");
-    result.unknown.forEach(function(q){lines.push("  • "+VERIFY[q.step]);});
-  }
-  var url=URL.createObjectURL(new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/plain;charset=utf-8"}));
-  var link=el("a",{href:url,download:"cyber-office-plan.txt"});
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
 function instrList(k){
   var st=STEPS[k], p=platform(), items=[];
@@ -568,8 +568,12 @@ function renderResult(){
   var c=el("div");
   c.appendChild(el("h1",null,"Ваш результат"));
   c.appendChild(el("p",{class:"small muted"},"Номер аудита: "+esc(state.auditId)));
-  c.appendChild(el("p",{class:"small"}, "<a href='#followup'>Получить рекомендации на email, в Telegram или запросить звонок</a>"));
-  c.appendChild(el("div",{class:"verdict "+R.verdict.cls},"<div class='lbl'>"+esc(R.verdict.lbl)+"</div><div>"+esc(R.verdict.txt)+"</div>"));
+  var score=R.protection;
+  var level=score===null?"Пока недостаточно данных":score<40?"Низкий уровень цифровой защищённости":score<75?"Средний уровень цифровой защищённости":"Высокий уровень цифровой защищённости";
+  var tone=score===null?"warn":score<40?"crit":score<75?"warn":"ok";
+  var ring=score===null?"":"<div class='score-ring' style='--score:"+score+"%' aria-label='"+score+" из 100'><strong>"+score+"</strong><span>из 100</span></div>";
+  var riskClass=R.verdict.cls==="crit"?" class='risk-flag'":"";
+  c.appendChild(el("section",{class:"verdict "+tone+" protection"},ring+"<div><h2 class='lbl'>"+level+"</h2><p class='small muted'>Средняя оценка по ответам, для которых удалось определить уровень риска.</p><p><strong"+riskClass+">"+esc(R.verdict.lbl)+".</strong> "+esc(R.verdict.txt)+"</p></div>"));
 
   if(R.scenarios.length && R.scenarios[0].lvl>=4){
     var m=R.scenarios[0];
@@ -578,9 +582,32 @@ function renderResult(){
     if(m.chain.length) rk.appendChild(el("div",{class:"chain"},m.chain.map(function(x){return "<span>"+esc(x)+"</span>";}).join("")));
     rk.appendChild(el("h3",null,"Что сделать в первую очередь"));
     rk.appendChild(el("ol",{class:"first"},m.first.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")));
-    rk.appendChild(el("a",{class:"btn",href:telegramLink("Помощь по рекомендации",m.step),target:"_blank",rel:"noopener noreferrer"},"Помогите с этим"));
     c.appendChild(rk);
   }
+
+  // карта
+  var map=el("details",{class:"card map"});
+  map.appendChild(el("summary",null,"Все цифровые риски: на что обратить внимание"));
+  map.appendChild(el("p",null,"На основе Ваших ответов мы выявили возможные цифровые риски, оценили их уровень и объяснили, к каким последствиям они могут привести."));
+  ["A","B","C"].forEach(function(th){
+    var qs=seq().filter(function(q){return q.th===th && q.scored!==false;});
+    map.appendChild(el("div",{class:"theme"},esc(THEMES[th])));
+    if(!qs.length){ map.appendChild(el("div",{class:"item"},"<div class='top'><span>Нет вопросов по этой теме</span><span class='chip cX'>Не относится</span></div>")); return; }
+    qs.forEach(function(q){
+      var item=el("div",{class:"item"});
+      item.appendChild(el("p",{class:"why"},esc(q.text)));
+      selected(q.id).forEach(function(index){
+        var answer=q.opts[index];
+        item.appendChild(el("div",{class:"top"},"<span>"+esc(answer.t)+"</span>"+chip(answer.s)));
+        if(answer.why) item.appendChild(el("div",{class:"why"},esc(answer.why)));
+      });
+      if(!selected(q.id).some(function(index){return q.opts[index].why;})) item.appendChild(el("p",{class:"why"},esc(q.why)));
+      map.appendChild(item);
+    });
+  });
+  c.appendChild(map);
+
+  c.appendChild(renderFollowup(R));
 
   if(R.unknown.length){
     var verify=el("section",{class:"card"});
@@ -589,8 +616,11 @@ function renderResult(){
   }
 
   if(R.plan.length){
-    c.appendChild(el("h2",{style:"margin-top:22px"},"Ваш план: "+R.plan.length+" "+plural(R.plan.length,["шаг","шага","шагов"])));
-    c.appendChild(el("p",{class:"muted small"},"Базовые рекомендации доступны бесплатно. Помощь специалиста — за донат. Размер доната выбираете вы."));
+    c.appendChild(el("h2",null,"Экспресс-план цифровой защиты готов!"));
+    c.appendChild(el("p",null,"Мы расположили рекомендации в порядке важности."));
+    c.appendChild(el("p",null,"Все инструкции доступны бесплатно."));
+    c.appendChild(el("p",null,"Если Вам потребуется помощь специалиста, Вы можете воспользоваться ею за донат."));
+    c.appendChild(el("p",null,"Донат — добровольное вознаграждение специалисту, размер которого Вы определяете сами, исходя из ценности полученной помощи."));
     R.plan.forEach(function(k,i){
       var st=STEPS[k];
       var box=el("article",{class:"step"});
@@ -637,45 +667,37 @@ function renderResult(){
 
   // следующий уровень: персональная диагностика
   var deep=el("section",{class:"card deep"});
-  var topics=["Домашний Wi-Fi и умный дом","Компьютеры и ноутбуки","Банки, карты и платежи","Криптовалюта","Поездки","Помощники и персонал","Публичность и соцсети","Бизнес и рабочие аккаунты","Документы и резервные копии"];
-  deep.innerHTML="<div class='k'>Следующий уровень</div><h2>Персональная диагностика</h2><p class='small'>Экспресс-аудит охватил телефон, пароли и почту, семью и домашний Wi-Fi. Персональная диагностика разбирает всю Вашу цифровую жизнь – и связи между аккаунтами, устройствами и людьми, которые не видны по отдельности. Итог – цифровой паспорт безопасности и план защиты для Вас и Вашей семьи.</p><div class='topics'>"+topics.map(function(t){return "<span>"+esc(t)+"</span>";}).join("")+"</div>";
-  deep.appendChild(el("a",{class:"btn",href:telegramLink("Персональная диагностика"),target:"_blank",rel:"noopener noreferrer"},"Хочу персональную диагностику"));
-  deep.appendChild(el("p",{class:"note"},"Откроется черновик с типом обращения и номером аудита. Формат и стоимость обсуждаются в чате."));
+  var topics=["Смартфоны, компьютеры и планшеты","Пароли, почту и важные аккаунты","Банки, карты и платежи","Криптовалюту и цифровые активы","Социальные сети и публичность","Семью, детей и близких","Помощников и персонал","Домашний Wi-Fi и умный дом","Бизнес и рабочие аккаунты","Безопасность в поездках","Документы и резервные копии"];
+  deep.innerHTML="<div class='k'>Следующий уровень защиты</div><h2>ПЕРСОНАЛЬНЫЙ ЦИФРОВОЙ ПАСПОРТ БЕЗОПАСНОСТИ</h2>"+
+    "<p>Экспресс-аудит помог Вам обратить внимание на наиболее распространённые цифровые риски. Но цифровая жизнь каждого человека уникальна.</p>"+
+    "<p>Наш специалист индивидуально изучит Вашу цифровую среду, выявит скрытые риски и предложит решения с учётом Вашего образа жизни, интересов, семьи и деятельности.</p>"+
+    "<h3>Что мы анализируем</h3><ul>"+topics.map(function(t){return "<li>"+esc(t)+"</li>";}).join("")+"</ul>"+
+    "<h3>Что Вы получите</h3><p>Ваш персональный цифровой паспорт безопасности: карту индивидуальных рисков, их взаимосвязей и возможных последствий, а также подробный план защиты именно для Вас и Ваших близких.</p>"+
+    "<p>Мы поможем не только выявить риски, но и найти наиболее эффективные решения.</p>";
+  var passportRequest={passport:true};
+  var passportForm=renderFollowup(null,passportRequest);
+  passportForm.hidden=true;
+  deep.appendChild(el("button",{class:"btn",type:"button",onclick:function(){passportRequest.submit();}},"Создать цифровой паспорт"));
+  deep.appendChild(el("p",{class:"small"},"Формат, объём и стоимость диагностики обсуждаются индивидуально со специалистом."));
   c.appendChild(deep);
+  c.appendChild(passportForm);
 
-  c.appendChild(renderFollowup(R));
-
-  // карта
-  var map=el("section",{class:"card map"});
-  map.appendChild(el("h2",null,"Подробно по темам"));
-  ["A","B","C"].forEach(function(th){
-    var qs=seq().filter(function(q){return q.th===th && q.scored!==false;});
-    map.appendChild(el("div",{class:"theme"},esc(THEMES[th])));
-    if(!qs.length){ map.appendChild(el("div",{class:"item"},"<div class='top'><span>Нет вопросов по этой теме</span><span class='chip cX'>Не относится</span></div>")); return; }
-    qs.forEach(function(q){
-      var item=el("div",{class:"item"});
-      item.appendChild(el("p",{class:"why"},esc(q.text)));
-      selected(q.id).forEach(function(index){
-        var answer=q.opts[index];
-        item.appendChild(el("div",{class:"top"},"<span>"+esc(answer.t)+"</span>"+chip(answer.s)));
-        if(answer.why) item.appendChild(el("div",{class:"why"},esc(answer.why)));
-      });
-      if(!selected(q.id).some(function(index){return q.opts[index].why;})) item.appendChild(el("p",{class:"why"},esc(q.why)));
-      map.appendChild(item);
-    });
-  });
-  c.appendChild(map);
-
+  var thanks=el("section",{class:"card"});
+  thanks.innerHTML="<h2>Спасибо, что уделили время своей безопасности!</h2>"+
+    "<p>Мы искренне надеемся, что наши рекомендации помогут Вам защитить себя и своих близких в цифровом мире.</p>"+
+    "<p>Один маленький шаг сегодня может предотвратить серьёзные проблемы в будущем.</p>"+
+    "<p>Берегите себя и своих близких!</p><p><strong>Киберофис</strong><br>«Ваша безопасность в цифровом мире»</p>";
+  c.appendChild(thanks);
   var r=el("div",{class:"row"});
   r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){ state.screen="q"; state.idx=0; save(); render(); window.scrollTo(0,0); }},"Изменить ответы"));
-  r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){state=emptyState();save();render();window.scrollTo(0,0);}},"Начать заново"));
-  c.appendChild(r);
+  r.appendChild(el("button",{class:"btn ghost",type:"button",onclick:function(){state=emptyState();preferredReply=null;save();render();window.scrollTo(0,0);}},"Пройти экспресс-аудит повторно"));
+  thanks.appendChild(r);
+  thanks.appendChild(el("p",{class:"small"},"Вы можете пройти экспресс-аудит ещё раз, чтобы подробнее разобраться в своих цифровых рисках и получить максимум пользы от наших рекомендаций."));
   var privacy=el("div",{class:"note",style:"margin-top:24px"});
   privacy.appendChild(el("p",null,"Это оценка по Вашим ответам, а не проверка телефона. Ответы сохраняются только в браузере этого устройства, чтобы Вы могли вернуться к результату. На общем устройстве другие пользователи этого браузера могут их увидеть."));
   c.appendChild(privacy);
   app.appendChild(c);
 }
-function plural(n,f){ var a=n%10,b=n%100; if(a===1&&b!==11) return f[0]; if(a>=2&&a<=4&&(b<10||b>=20)) return f[1]; return f[2]; }
 try { load(); render(); } catch (e) { console.error(e); app.innerHTML = "<section class='card'><h1>Не удалось открыть опросник</h1><p>Попробуйте открыть опубликованный сайт по HTTPS в обычном браузере или обновить страницу.</p></section>"; }
 })();
 </script>
