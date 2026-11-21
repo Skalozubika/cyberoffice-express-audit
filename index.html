@@ -295,8 +295,8 @@ function seq(){
 function stateOf(q){
   var scores=selected(q.id).map(function(i){ return q.opts[i].s; });
   var severity=Math.max(0,...scores.map(lvlOf));
+  if(scores.includes("N")) return "N";
   if(severity) return severity;
-  if(scores.indexOf("N")>=0) return "N";
   return scores[0] || null;
 }
 function lvlOf(s){ return typeof s==="number" ? s : 0; }
@@ -411,9 +411,9 @@ var VERIFY = {
 function compute(){
   var questions=seq().filter(function(q){return q.scored!==false;});
   var byStep={}, points=[];
-  var scale={Z:100,3:50,4:25,5:0};
+  var scale={Z:100,3:50,4:25,5:0,N:0};
   questions.forEach(function(q){
-    var score=stateOf(q), level=lvlOf(score);
+    var score=stateOf(q), level=score==="N"?5:lvlOf(score);
     if(level) byStep[q.step]=level;
     if(Object.hasOwn(scale,score)) points.push(scale[score]);
   });
@@ -425,26 +425,23 @@ function compute(){
   });
   var scenarios=plan.map(function(step){
     var level=byStep[step], question=QI[STEPS[step].q];
+    if(stateOf(question)==="N") return {step:step,lvl:level,title:"Неясно, защищена ли эта настройка: "+STEPS[step].title,chain:[],first:[VERIFY[step]||STEPS[step].check]};
     return RULES.find(function(rule){return rule.step===step && rule.lvl===level && rule.when();}) ||
       {step:step,lvl:level,title:question.why,chain:[],first:instrList(step).slice(0,2)};
-  });
-  var unknown=questions.filter(function(q){
-    return selected(q.id).some(function(i){return q.opts[i].s==="N";});
   });
   var max=plan.length ? byStep[plan[0]] : 0;
   var verdict;
   if(max>=5) verdict={cls:"crit",lbl:"Есть критический риск",txt:"Начните с первого шага плана."};
   else if(max===4) verdict={cls:"warn",lbl:"Есть риски, которые стоит снизить",txt:"Начните с рекомендации с наибольшим приоритетом."};
   else if(max===3) verdict={cls:"warn",lbl:"Есть настройки, которые можно улучшить",txt:"Посмотрите план и начните с первого шага."};
-  else if(unknown.length) verdict={cls:"warn",lbl:"Есть настройки, которые стоит проверить",txt:"По ответам пока недостаточно сведений для оценки этих настроек."};
   else verdict={cls:"ok",lbl:"В ответах нет признаков серьёзного риска",txt:"Оценка основана на Ваших ответах."};
   var protection=points.length ? Math.round(points.reduce(function(sum,n){return sum+n;},0)/points.length) : null;
-  return {scenarios:scenarios,verdict:verdict,plan:plan,unknown:unknown,protection:protection};
+  return {scenarios:scenarios,verdict:verdict,plan:plan,protection:protection};
 }
 function chip(st){
   if(st==="Z") return "<span class='chip cZ'>Низкий риск · 1/5</span>";
   if(st==="X") return "<span class='chip cX'>Не относится</span>";
-  if(st==="N") return "<span class='chip cN'>Стоит проверить</span>";
+  if(st==="N") return "<span class='chip c5'>Критический риск · защита не подтверждена</span>";
   if(st===5) return "<span class='chip c5'>Критический риск · 5/5</span>";
   if(st===4) return "<span class='chip c4'>Высокий риск · 4/5</span>";
   return "<span class='chip c3'>Средний риск · 3/5</span>";
@@ -508,7 +505,6 @@ function renderFollowup(result,request){
       lines.push("Прошу прислать все шаги инструкции для моей модели.");
     }
     if(result && !isPassport && result.plan.length) lines.push("Мой план: "+result.plan.map(function(key){return STEPS[key].title;}).join("; "));
-    if(result && !isPassport && result.unknown.length) lines.push("Стоит проверить: "+result.unknown.map(function(q){return STEPS[q.step].title;}).join("; "));
     if(!isSamsung && !isPassport) preferredReply={channel:channel,address:channel==="email"?input.value.trim():""};
     if(channel==="email"){
       var operatorEmail="9940404@mail.ru";
@@ -610,12 +606,6 @@ function renderResult(){
   c.appendChild(map);
 
   c.appendChild(renderFollowup(R));
-
-  if(R.unknown.length){
-    var verify=el("section",{class:"card"});
-    verify.innerHTML="<h3>Стоит проверить</h3><p class='small muted'>Ответ «Не знаю» не считается подтверждённым риском.</p><ul>"+R.unknown.map(function(q){return "<li>"+esc(VERIFY[q.step])+"</li>";}).join("")+"</ul>";
-    c.appendChild(verify);
-  }
 
   if(R.plan.length){
     c.appendChild(el("h2",null,"Экспресс-план цифровой защиты готов!"));
