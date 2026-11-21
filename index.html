@@ -492,6 +492,7 @@ function renderFollowup(result,request){
     input.disabled=!isEmail;
     input.required=isEmail;
     note.textContent=notes[channel];
+    if(!isPassport && !isSamsung) form.querySelector("button").textContent=channel==="phone"?"Заказать звонок":"Отправить рекомендации";
   }
   function sendRequest(){
     var channel=form.elements.reply.value;
