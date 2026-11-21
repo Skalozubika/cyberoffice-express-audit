@@ -632,7 +632,7 @@ function renderResult(){
       var localId = "instruction-" + k;
       guides.forEach(function(guide){
         var label = guides.length > 1 ? "Сделаю сам · " + guide.name : "Сделаю сам";
-        acts.appendChild(el("a",{class:"btn secondary",href:guide.url+"#"+guide.steps[k]},label));
+        acts.appendChild(el("a",{class:"btn secondary",href:guide===GUIDES.samsung?guide.url:guide.url+"#"+guide.steps[k]},label));
       });
       if(!guides.length){
         var bS = el("button",{id:"self-"+k,class:"btn secondary",type:"button","aria-controls":localId,"aria-expanded":String(Boolean(state.open[k]))},state.open[k]?"Скрыть инструкцию":"Сделаю сам");
